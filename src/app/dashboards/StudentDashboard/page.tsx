@@ -38,6 +38,13 @@ export default function StudentDashboard() {
       color: "from-yellow-400 to-orange-500",
       path: "/dictionary",
     },
+    {
+      name: "Comprehension",
+      icon: <BookOpen className="w-6 h-6" />,
+      color: "from-cyan-400 to-fuchsia-500",
+      path: "/comprehension/play",
+    }
+
   ];
 
   return (
@@ -74,7 +81,7 @@ export default function StudentDashboard() {
             👋
           </h1>
           <p className="text-cyan-200/70 font-light">
-            Your personalized AI-powered learning dashboard
+            Your personalized learning dashboard
           </p>
         </div>
 

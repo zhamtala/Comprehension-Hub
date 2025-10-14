@@ -88,7 +88,7 @@ export default function Home() {
 
       {/* Futuristic footer */}
       <footer className="absolute bottom-6 text-sm text-cyan-200/80 font-mono tracking-wide">
-        © {new Date().getFullYear()} CompreHub Neural Interface v2.0 — Powered by Adaptive Intelligence
+        © {new Date().getFullYear()} CompreHub Neural Interface v2.0 — Powered by Technology
       </footer>
 
       {/* Floating data particles */}

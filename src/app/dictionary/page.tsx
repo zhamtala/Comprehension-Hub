@@ -48,7 +48,7 @@ export default function DictionaryPage() {
         animate={{ y: 0, opacity: 1 }}
         className="text-4xl font-extrabold mb-8 bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent"
       >
-        AI Dictionary
+        Word Dictionary
       </motion.h1>
 
       {/* 🔍 Search Bar */}
@@ -151,7 +151,7 @@ export default function DictionaryPage() {
 
       {/* Footer */}
       <footer className="absolute bottom-6 text-sm text-cyan-200/80 font-mono tracking-wide">
-        CompreHub — Empower your vocabulary with AI ⚡
+        CompreHub — Empower your vocabulary with Technology ⚡
       </footer>
     </motion.div>
   );

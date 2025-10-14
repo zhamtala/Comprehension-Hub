@@ -122,7 +122,7 @@ export default function LoginPage() {
           className="relative z-10 w-full max-w-md rounded-2xl bg-white/10 p-8 shadow-[0_0_30px_rgba(0,255,255,0.2)] backdrop-blur-xl border border-cyan-400/30"
         >
           <h1 className="mb-6 text-center text-3xl font-bold bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-purple-400 bg-clip-text text-transparent">
-            CompreHub AI Access
+            CompreHub Access
           </h1>
           <p className="mb-8 text-center text-sm text-cyan-200 font-mono">
             Please authenticate your access credentials.
