@@ -77,15 +77,33 @@ export default function ListeningComprehension() {
 };
 
 
-  const playStory = () => {
-    if (!story) return;
-    const utterance = new SpeechSynthesisUtterance(story);
-    utterance.rate = 1;
-    utterance.pitch = 1;
-    utterance.onstart = () => setIsPlaying(true);
-    utterance.onend = () => setIsPlaying(false);
-    speechSynthesis.speak(utterance);
-  };
+ const playStory = async () => {
+  if (!story) return;
+
+  try {
+    setIsPlaying(true);
+
+    const response = await fetch(`/api/tts?text=${encodeURIComponent(story.slice(0, 200))}`);
+    if (!response.ok) throw new Error("TTS API error");
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+
+    audio.onended = () => setIsPlaying(false);
+    audio.onerror = (err) => {
+      console.error("Audio playback failed:", err);
+      setIsPlaying(false);
+    };
+
+    await audio.play();
+  } catch (err) {
+    console.error("Error playing story:", err);
+    setIsPlaying(false);
+  }
+};
+
+
 
   const checkAnswers = () => {
     let correctCount = 0;
@@ -128,7 +146,7 @@ export default function ListeningComprehension() {
             🎧
           </h1>
           <p className="text-cyan-200/70 font-light">
-            Listen carefully to the AI-generated story — no text hints here!
+            Listen carefully to the story — no text hints here!
           </p>
         </div>
       </div>

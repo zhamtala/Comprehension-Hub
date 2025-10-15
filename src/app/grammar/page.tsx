@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 
 // --- Type Definitions ---
 interface QuizItem {
@@ -83,12 +85,15 @@ const highlightError = (
 
 // --- Main Component ---
 export default function GrammarQuiz() {
+  const router = useRouter();
+  
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [userAnswer, setUserAnswer] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [isQuizFinished, setIsQuizFinished] = useState(false);
 
+  
   const currentQuestion = quizData[currentQuestionIndex];
   const answeredCorrectly = userAnswer === currentQuestion?.correctWord;
 
@@ -112,48 +117,63 @@ export default function GrammarQuiz() {
     else setIsQuizFinished(true);
   };
 
-  // --- Quiz Finished ---
+ // --- Quiz Finished ---
   if (isQuizFinished) {
-    return (
+
+  return (
+    <motion.div
+      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-indigo-950 to-purple-950 text-white overflow-hidden relative"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
       <motion.div
-        className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-indigo-950 to-purple-950 text-white overflow-hidden relative"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        className="relative bg-white/10 backdrop-blur-lg border border-white/20 p-10 rounded-2xl shadow-[0_0_50px_rgba(99,102,241,0.5)] text-center"
+        initial={{ scale: 0.8 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', stiffness: 120 }}
       >
-        <motion.div
-          className="relative bg-white/10 backdrop-blur-lg border border-white/20 p-10 rounded-2xl shadow-[0_0_50px_rgba(99,102,241,0.5)] text-center"
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 120 }}
+        <motion.h1
+          className="text-4xl font-extrabold mb-4 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent"
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ repeat: Infinity, duration: 2 }}
         >
-          <motion.h1
-            className="text-4xl font-extrabold mb-4 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent"
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-          >
-            🎉 Quiz Complete!
-          </motion.h1>
-          <p className="text-lg text-cyan-100 mb-6">
-            Your Final Score: {score} / {quizData.length}
-          </p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              setCurrentQuestionIndex(0);
-              setScore(0);
-              setUserAnswer(null);
-              setFeedback(null);
-              setIsQuizFinished(false);
-            }}
-            className="mt-4 py-3 px-8 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-semibold shadow-lg hover:shadow-[0_0_30px_rgba(99,102,241,0.6)] transition"
-          >
-            Try Again
-          </motion.button>
-        </motion.div>
+          🎉 Quiz Complete!
+        </motion.h1>
+
+        <p className="text-lg text-cyan-100 mb-6">
+          Your Final Score: {score} / {quizData.length}
+        </p>
+
+        {/* Try Again Button */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => {
+            setCurrentQuestionIndex(0);
+            setScore(0);
+            setUserAnswer(null);
+            setFeedback(null);
+            setIsQuizFinished(false);
+          }}
+          className="mt-4 py-3 px-8 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-semibold shadow-lg hover:shadow-[0_0_30px_rgba(99,102,241,0.6)] transition"
+        >
+          🔁 Try Again
+        </motion.button>
+
+        {/* ✅ Back to Selection Button */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => router.push("/select")}
+          className="mt-4 ml-3 py-3 px-8 rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white font-semibold shadow-lg hover:shadow-[0_0_30px_rgba(192,38,211,0.6)] transition"
+        >
+          ⬅ Back to Selection
+        </motion.button>
       </motion.div>
-    );
-  }
+    </motion.div>
+  );
+}
+
 
   // --- Main Quiz UI ---
   return (
