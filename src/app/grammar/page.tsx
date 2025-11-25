@@ -271,8 +271,8 @@ export default function GrammarQuiz() {
             >
               {feedback.status}{" "}
               {answeredCorrectly
-                ? `✅ Correct: ${currentQuestion.correctWord}`
-                : `❌ You chose: ${userAnswer}`}
+                ? ` You chose: ${currentQuestion.correctWord}`
+                : ` You chose: ${userAnswer}`}
               <p className="mt-2 text-sm text-black/80">
                 {currentQuestion.explanation}
               </p>

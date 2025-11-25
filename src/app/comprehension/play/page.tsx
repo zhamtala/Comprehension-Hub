@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 export default function ComprehensionPage() {
   const router = useRouter();
 
+  const [currentStoryIndex, setCurrentStoryIndex] = useState<number | null>(null);
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard" | "">("");
   const [story, setStory] = useState("");
   const [questions, setQuestions] = useState<{ q: string; a: string[]; correct: string }[]>([]);
@@ -41,7 +42,12 @@ export default function ComprehensionPage() {
   ];
 
   const generateStory = () => {
-    const randomStory = storyList[Math.floor(Math.random() * storyList.length)];
+    let index = currentStoryIndex;
+    if (index === null) {
+      index = Math.floor(Math.random() * storyList.length);
+      setCurrentStoryIndex(index);
+    }
+    const randomStory = storyList[index];
     setStory(randomStory.story);
     setQuestions(randomStory.questions);
     setTitle(randomStory.title);
@@ -50,34 +56,22 @@ export default function ComprehensionPage() {
   };
 
   const playAudio = async () => {
-  if (!story) return;
-
-  try {
-    setIsPlaying(true);
-
-    // Fetch audio from your existing ElevenLabs mock endpoint
-    const response = await fetch(`/api/tts?text=${encodeURIComponent(story)}`);
-    if (!response.ok) throw new Error("Failed to fetch audio");
-
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-
-    const audio = new Audio(url);
-    audio.onended = () => setIsPlaying(false);
-    audio.onerror = (err) => {
-      console.error("Audio playback failed:", err);
+    if (!story) return;
+    try {
+      setIsPlaying(true);
+      const response = await fetch(`/api/tts?text=${encodeURIComponent(story)}`);
+      if (!response.ok) throw new Error("Failed to fetch audio");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.onended = () => setIsPlaying(false);
+      audio.onerror = () => setIsPlaying(false);
+      document.body.appendChild(audio);
+      await audio.play();
+    } catch {
       setIsPlaying(false);
-    };
-
-    // 🔊 Ensure Google Meet can capture it by attaching to tab
-    document.body.appendChild(audio);
-    await audio.play();
-  } catch (err) {
-    console.error("Error during TTS playback:", err);
-    setIsPlaying(false);
-  }
-};
-
+    }
+  };
 
   const checkAnswers = () => {
     let correctCount = 0;
@@ -98,50 +92,31 @@ export default function ComprehensionPage() {
       animate={{ opacity: 1 }}
       className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-black via-slate-900 to-black text-white p-8 relative overflow-hidden"
     >
-      {/* Celebration Confetti Burst */}
-{showConfetti && typeof window !== "undefined" && (
-  <motion.div
-    className="fixed inset-0 z-[9999] pointer-events-none"
-    initial={{ opacity: 0, scale: 0.8 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ type: "spring", stiffness: 150, damping: 15 }}
-  >
-    <Confetti
-      width={window.innerWidth}
-      height={window.innerHeight}
-      numberOfPieces={400}
-      recycle={false}
-      gravity={0.3}
-      tweenDuration={5000}
-      colors={
-        difficulty === "easy"
-          ? ["#67e8f9", "#22d3ee", "#06b6d4", "#a5f3fc"]
-          : difficulty === "medium"
-          ? ["#34d399", "#10b981", "#6ee7b7", "#059669"]
-          : ["#c084fc", "#a78bfa", "#8b5cf6", "#7c3aed"]
-      }
-      initialVelocityY={20}
-      confettiSource={{
-        x: window.innerWidth / 2 - 50,
-        y: window.innerHeight / 2 - 50,
-        w: 100,
-        h: 100,
-      }}
-    />
-  </motion.div>
-)}
+      {/* 🎉 Confetti */}
+      {showConfetti && typeof window !== "undefined" && (
+        <motion.div
+          className="fixed inset-0 z-[9999] pointer-events-none"
+        >
+          <Confetti
+            width={window.innerWidth}
+            height={window.innerHeight}
+            numberOfPieces={400}
+            recycle={false}
+          />
+        </motion.div>
+      )}
 
-
-      {/* Background accent glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,255,0.07),transparent_70%)]" />
+      {/* 🌟 TOP-LEFT BACK BUTTON */}
+      <motion.button
+        onClick={() => router.push("/select")}
+        whileHover={{ scale: 1.05 }}
+        className="absolute top-6 left-6 flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 border border-cyan-400/30 text-cyan-300 hover:bg-cyan-500/20 z-20"
+      >
+        <ArrowLeft className="w-5 h-5" /> Back to Selection
+      </motion.button>
 
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="z-10 text-center mb-10"
-      >
+      <motion.div className="z-10 text-center mb-10">
         <h1 className="text-5xl font-extrabold bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent flex justify-center items-center gap-2">
           <Sparkles className="w-7 h-7 text-cyan-400" /> Comprehension Challenge
         </h1>
@@ -155,13 +130,13 @@ export default function ComprehensionPage() {
         {["easy", "medium", "hard"].map((level) => (
           <motion.button
             key={level}
-            whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(0,255,255,0.5)" }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               setDifficulty(level as any);
               generateStory();
             }}
-            className={`px-8 py-3 rounded-full font-semibold uppercase tracking-wide transition-all duration-200 ${
+            className={`px-8 py-3 rounded-full font-semibold uppercase tracking-wide ${
               difficulty === level
                 ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white shadow-lg"
                 : "bg-white/10 text-gray-300 border border-cyan-400/20 hover:bg-white/20"
@@ -174,12 +149,7 @@ export default function ComprehensionPage() {
 
       {/* Story Display */}
       {story && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="z-10 bg-white/10 border border-cyan-400/20 rounded-3xl p-8 text-center max-w-3xl mb-10 backdrop-blur-md shadow-2xl"
-        >
+        <motion.div className="z-10 bg-white/10 border border-cyan-400/20 rounded-3xl p-8 text-center max-w-3xl mb-10 backdrop-blur-md shadow-2xl">
           <h2 className="text-3xl font-bold text-cyan-300 mb-6">{title}</h2>
 
           {difficulty === "easy" && <p className="text-gray-100 leading-relaxed mb-4 text-lg">{story}</p>}
@@ -192,9 +162,7 @@ export default function ComprehensionPage() {
                 onClick={playAudio}
                 disabled={isPlaying}
                 className={`flex items-center justify-center gap-2 mx-auto mt-2 px-6 py-3 rounded-full font-medium transition-all ${
-                  isPlaying
-                    ? "bg-gray-600 cursor-not-allowed"
-                    : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90"
+                  isPlaying ? "bg-gray-600 cursor-not-allowed" : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90"
                 }`}
               >
                 <Volume2 className="w-5 h-5" /> {isPlaying ? "Playing..." : "Listen to Story"}
@@ -208,9 +176,7 @@ export default function ComprehensionPage() {
               onClick={playAudio}
               disabled={isPlaying}
               className={`flex items-center justify-center gap-2 mx-auto mt-2 px-6 py-3 rounded-full font-medium transition-all ${
-                isPlaying
-                  ? "bg-gray-600 cursor-not-allowed"
-                  : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90"
+                isPlaying ? "bg-gray-600 cursor-not-allowed" : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90"
               }`}
             >
               <Volume2 className="w-5 h-5" /> {isPlaying ? "Playing..." : "Listen to Story"}
@@ -227,14 +193,8 @@ export default function ComprehensionPage() {
           </h2>
 
           {questions.map((q, i) => (
-            <motion.div
-              key={i}
-              whileHover={{ scale: 1.01 }}
-              className="p-6 rounded-2xl bg-white/10 border border-cyan-400/20 shadow-lg backdrop-blur-md"
-            >
-              <p className="font-semibold text-cyan-100 mb-4 text-lg">
-                {i + 1}. {q.q}
-              </p>
+            <motion.div key={i} className="p-6 rounded-2xl bg-white/10 border border-cyan-400/20 shadow-lg backdrop-blur-md">
+              <p className="font-semibold text-cyan-100 mb-4 text-lg">{i + 1}. {q.q}</p>
               <div className="grid sm:grid-cols-2 gap-3">
                 {q.a.map((opt) => (
                   <motion.button
@@ -254,135 +214,54 @@ export default function ComprehensionPage() {
             </motion.div>
           ))}
 
-          <div className="flex flex-col items-center gap-4 mt-10">
-            <motion.button
-              whileHover={{ scale: 1.08 }}
-              onClick={checkAnswers}
-              className="bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:opacity-90 transition-all"
-            >
-              Check Answers
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => router.push("/select")}
-              className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 border border-cyan-400/30 text-cyan-300 hover:bg-cyan-500/20 transition-all font-medium"
-            >
-              <ArrowLeft className="w-5 h-5" /> Back to Selection
-            </motion.button>
-          </div>
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            onClick={checkAnswers}
+            className="bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:opacity-90 transition-all"
+          >
+            Check Answers
+          </motion.button>
         </div>
       )}
 
-     {/* 🌟 Animated Result Modal */}
-<AnimatePresence>
-  {showResult && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-md z-20"
-    >
-      <motion.div
-        className="relative bg-white rounded-3xl p-10 text-center shadow-2xl border border-gray-200 max-w-lg w-full"
-        initial={{ scale: 0.6, opacity: 0, rotate: -8 }}
-        animate={{
-          scale: 1,
-          opacity: 1,
-          rotate: 0,
-        }}
-        transition={{
-          duration: 0.7,
-          ease: "easeOut",
-          type: "spring",
-        }}
-      >
-        <motion.h2
-          className="text-3xl font-extrabold mb-3 bg-gradient-to-r from-cyan-500 to-fuchsia-500 bg-clip-text text-transparent"
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          🎉 Challenge Complete!
-        </motion.h2>
+      {/* Result Modal */}
+      <AnimatePresence>
+        {showResult && (
+          <motion.div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-md z-20">
+            <motion.div className="relative bg-white rounded-3xl p-10 text-center shadow-2xl border border-gray-200 max-w-lg w-full">
+              <motion.h2 className="text-3xl font-extrabold mb-3 bg-gradient-to-r from-cyan-500 to-fuchsia-500 bg-clip-text text-transparent">
+                🎉 Challenge Complete!
+              </motion.h2>
 
-        <motion.p
-          className="text-gray-700 mb-4 text-lg"
-          initial={{ y: 10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          You scored{" "}
-          <span className="font-semibold text-emerald-500">{score}</span> out of{" "}
-          <span className="font-semibold">{questions.length}</span>
-        </motion.p>
+              <motion.p className="text-gray-700 mb-4 text-lg">
+                You scored <span className="font-semibold text-emerald-500">{score}</span> out of <span className="font-semibold">{questions.length}</span>
+              </motion.p>
 
-        <motion.p
-          className="text-gray-600 italic mb-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-        >
-          {score === questions.length
-            ? "Perfect score! You truly mastered it 🧠✨"
-            : score > questions.length / 2
-            ? "Awesome effort — you’re improving fast 🚀"
-            : "Don’t stop now! Each try makes you stronger 💪"}
-        </motion.p>
+              <motion.p className="text-gray-600 italic mb-6">
+                {score === questions.length ? "Perfect score! You truly mastered it 🧠✨" :
+                 score > questions.length / 2 ? "Awesome effort — you’re improving fast 🚀" :
+                 "Don’t stop now! Each try makes you stronger 💪"}
+              </motion.p>
 
-        <motion.div
-          className="flex justify-center gap-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-        >
-          <motion.button
-            whileHover={{
-              scale: 1.1,
-              boxShadow: "0 0 20px rgba(34,211,238,0.6)",
-            }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              setShowResult(false);
-              setStory("");
-              setQuestions([]);
-              setDifficulty("");
-            }}
-            className="px-6 py-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold"
-          >
-            Try Another Story
-          </motion.button>
-
-          <motion.button
-            whileHover={{
-              scale: 1.1,
-              boxShadow: "0 0 20px rgba(236,72,153,0.6)",
-            }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => router.push("/select")}
-            className="px-6 py-2 rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white font-semibold"
-          >
-            Back to Selection
-          </motion.button>
-        </motion.div>
-
-        {/* ✨ Animated Sparkle Overlay */}
-        <motion.div
-          className="absolute inset-0 rounded-3xl bg-gradient-to-br from-transparent via-white/20 to-transparent pointer-events-none"
-          animate={{
-            opacity: [0.3, 0.6, 0.3],
-            scale: [1, 1.02, 1],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-          }}
-        />
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  // Reset story index so a new story is picked
+                  setCurrentStoryIndex(null);
+                  setShowResult(false);
+                  setStory("");
+                  setQuestions([]);
+                  setDifficulty("");
+                }}
+                className="px-6 py-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold"
+              >
+                  Try Another Story
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <footer className="absolute bottom-6 text-sm text-cyan-300/80 font-mono tracking-wide">
         CompreHub — Read, Listen, Understand ⚡
@@ -390,4 +269,3 @@ export default function ComprehensionPage() {
     </motion.div>
   );
 }
- 
