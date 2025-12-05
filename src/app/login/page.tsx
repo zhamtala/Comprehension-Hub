@@ -112,18 +112,19 @@ export default function LoginPage() {
         </motion.div>
       </motion.div>
 
-      {/* ACCESS GRANTED overlay */}
+        {/* ACCESS GRANTED overlay */}
       <AnimatePresence>
         {showWelcome && (
           <motion.div
             key="welcome"
-            className="absolute inset-0 flex flex-col items-center justify-center z-50 bg-black/70 backdrop-blur-md"
+            className="absolute inset-0 flex flex-col items-center justify-center z-50 bg-black/70 backdrop-blur-md px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
+            {/* HEADER */}
             <motion.h1
-              className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-widest text-cyan-300 mb-4"
+              className="text-2xl sm:text-4xl md:text-6xl font-extrabold tracking-widest text-cyan-300 mb-3 text-center leading-tight"
               initial={{ scale: 0.9, y: 10 }}
               animate={{ scale: 1.03, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -131,8 +132,9 @@ export default function LoginPage() {
               ACCESS GRANTED
             </motion.h1>
 
+            {/* SUBTEXT */}
             <motion.p
-              className="mt-2 text-sm sm:text-base text-fuchsia-200 font-mono"
+              className="mt-1 text-xs sm:text-sm md:text-base text-fuchsia-200 font-mono text-center max-w-[18rem] sm:max-w-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: [0, 1, 0.9] }}
               transition={{ delay: 0.2, duration: 2 }}
@@ -140,14 +142,18 @@ export default function LoginPage() {
               Initializing CompreHub Intelligence...
             </motion.p>
 
+            {/* PULSING RING */}
             <motion.div
-              className="relative mt-8 w-36 h-36 rounded-full border-2 border-cyan-400/30 flex items-center justify-center"
+              className="relative mt-6 w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full border-2 border-cyan-400/30 flex items-center justify-center"
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 1.8, repeat: Infinity }}
             />
+
           </motion.div>
         )}
       </AnimatePresence>
+
+
 
       {/* Login Card */}
       {!showWelcome && (
