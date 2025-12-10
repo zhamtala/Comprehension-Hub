@@ -37,26 +37,43 @@ export default function DictionaryPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
-      className="min-h-screen bg-black text-white flex flex-col items-center p-8 relative overflow-hidden"
+      className="min-h-screen bg-black text-white flex flex-col items-center p-4 md:p-8 relative overflow-x-hidden"
     >
-      {/* 🌈 Background */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,255,0.07),transparent_60%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.05)_1px,transparent_1px)] bg-[size:50px_50px]" />
+      {/* FIXED BACK BUTTON */}
+      <a
+  href="/dashboards/StudentDashboard"
+  className="
+    fixed top-4 left-4 z-50
+    w-12 h-12
+    flex items-center justify-center
+    rounded-full
+    bg-white/10 border border-white/15 backdrop-blur-xl
+    shadow-[0_0_16px_rgba(0,255,255,0.45)]
+    hover:bg-white/20 hover:scale-105
+    transition-all active:scale-95
+  "
+>
+  <span className="text-cyan-300 text-3xl leading-none">←</span>
+</a>
 
+
+
+
+      {/* PAGE HEADER */}
       <motion.h1
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="text-4xl font-extrabold mb-8 bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent"
+        className="text-3xl sm:text-4xl font-extrabold mb-6 md:mb-10 bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent text-center mt-12 sm:mt-16"
       >
         Word Dictionary
       </motion.h1>
 
-      {/* 🔍 Search Bar */}
+      {/* SEARCH BAR */}
       <motion.div
         initial={{ scale: 0.9 }}
         animate={{ scale: 1 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-xl flex items-center bg-white/10 border border-cyan-400/30 rounded-full overflow-hidden shadow-lg mb-10 backdrop-blur-md"
+        className="w-full max-w-md flex flex-col sm:flex-row items-center gap-2 bg-white/10 border border-cyan-400/30 rounded-full overflow-hidden shadow-lg mb-6 md:mb-10 backdrop-blur-md p-2"
       >
         <input
           type="text"
@@ -64,64 +81,64 @@ export default function DictionaryPage() {
           value={word}
           onChange={(e) => setWord(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && fetchDefinition(word)}
-          className="flex-1 bg-transparent outline-none px-5 py-3 text-lg text-white placeholder-cyan-200/50"
+          className="flex-1 bg-transparent outline-none px-4 py-2 text-base sm:text-lg text-white placeholder-cyan-200/50 rounded-full w-full"
         />
         <button
           onClick={() => fetchDefinition(word)}
-          className="p-3 bg-gradient-to-r from-cyan-500 to-fuchsia-500 rounded-full m-1 hover:opacity-90 transition"
+          className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-fuchsia-500 rounded-full hover:opacity-90 transition w-full sm:w-auto flex justify-center"
         >
-          <Search className="w-6 h-6 text-white" />
+          <Search className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
         </button>
       </motion.div>
 
-      {/* 💫 Loading */}
+      {/* LOADING */}
       {loading && (
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-cyan-300 mt-6"
+          className="text-cyan-300 mt-4 text-center"
         >
           Searching for "{word}"...
         </motion.p>
       )}
 
-      {/* ⚠️ Error */}
+      {/* ERROR */}
       {error && (
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-red-400 mt-6"
+          className="text-red-400 mt-4 text-center"
         >
           {error}
         </motion.p>
       )}
 
-      {/* 📚 Word Definition */}
+      {/* WORD DEFINITION */}
       {data && (
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="z-10 mt-6 p-8 bg-white/10 backdrop-blur-md border border-cyan-400/30 rounded-2xl shadow-xl w-full max-w-3xl"
+          className="z-10 mt-4 md:mt-6 p-6 md:p-8 bg-white/10 backdrop-blur-md border border-cyan-400/30 rounded-2xl shadow-xl w-full max-w-3xl"
         >
-          {/* Header with Audio */}
-          <div className="flex items-center justify-between mb-4">
+          {/* WORD HEADER & AUDIO */}
+          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-center mb-4">
             <div>
-              <h2 className="text-3xl font-bold capitalize text-cyan-300 flex items-center gap-2">
-                <BookOpenText className="w-7 h-7" /> {data.word}
+              <h2 className="text-2xl md:text-3xl font-bold capitalize text-cyan-300 flex items-center gap-2">
+                <BookOpenText className="w-6 h-6 md:w-7 md:h-7" /> {data.word}
               </h2>
               <p className="text-fuchsia-300 italic">{data.phonetic}</p>
             </div>
             {data.phonetics?.[0]?.audio && (
               <button
                 onClick={() => playAudio(data.phonetics[0].audio)}
-                className="bg-cyan-500/20 hover:bg-cyan-500/40 p-3 rounded-full transition"
+                className="mt-3 md:mt-0 bg-cyan-500/20 hover:bg-cyan-500/40 p-3 rounded-full transition"
               >
                 <Volume2 className="w-6 h-6 text-cyan-300" />
               </button>
             )}
           </div>
 
-          {/* Meanings */}
+          {/* MEANINGS */}
           {data.meanings?.map((m: any, i: number) => (
             <div key={i} className="mb-6">
               <h3 className="text-lg text-yellow-300 font-semibold mb-2">
@@ -149,8 +166,8 @@ export default function DictionaryPage() {
         </motion.div>
       )}
 
-      {/* Footer */}
-      <footer className="absolute bottom-6 text-sm text-cyan-200/80 font-mono tracking-wide">
+      {/* FOOTER */}
+      <footer className="mt-auto pb-6 text-xs md:text-sm text-cyan-200/80 font-mono tracking-wide text-center">
         CompreHub — Empower your vocabulary with Technology ⚡
       </footer>
     </motion.div>

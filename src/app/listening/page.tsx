@@ -15,17 +15,7 @@ export default function ListeningPage() {
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [screenSize, setScreenSize] = useState({ width: 400, height: 800 });
   const resultBoxRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const updateSize = () => setScreenSize({ width: window.innerWidth, height: window.innerHeight });
-      updateSize();
-      window.addEventListener("resize", updateSize);
-      return () => window.removeEventListener("resize", updateSize);
-    }
-  }, []);
 
   const storyList = [
     {
@@ -33,8 +23,16 @@ export default function ListeningPage() {
       story: `Once upon a time, a curious child named Aria found a glowing seashell by the shore. 
       When she held it to her ear, she could hear voices from the ocean telling her secrets of the deep sea.`,
       questions: [
-        { q: "What did Aria find on the shore?", a: ["A glowing seashell", "A golden key", "A bottle", "A pearl"], correct: "A glowing seashell" },
-        { q: "What did Aria hear when she held the shell?", a: ["Ocean waves", "Voices from the ocean", "Bird songs", "A whispering wind"], correct: "Voices from the ocean" },
+        {
+          q: "What did Aria find on the shore?",
+          a: ["A glowing seashell", "A golden key", "A bottle", "A pearl"],
+          correct: "A glowing seashell",
+        },
+        {
+          q: "What did Aria hear when she held the shell?",
+          a: ["Ocean waves", "Voices from the ocean", "Bird songs", "A whispering wind"],
+          correct: "Voices from the ocean",
+        },
       ],
     },
     {
@@ -42,8 +40,16 @@ export default function ListeningPage() {
       story: `In a quiet forest, a young fox named Lumo discovered a lantern that never ran out of light. 
       Every night, he used it to guide lost travelers back to their homes.`,
       questions: [
-        { q: "What did Lumo find in the forest?", a: ["A glowing flower", "A lantern", "A magic stone", "A map"], correct: "A lantern" },
-        { q: "What did Lumo do with the lantern?", a: ["Decorated his den", "Guided travelers home", "Played with it", "Traded it for food"], correct: "Guided travelers home" },
+        {
+          q: "What did Lumo find in the forest?",
+          a: ["A glowing flower", "A lantern", "A magic stone", "A map"],
+          correct: "A lantern",
+        },
+        {
+          q: "What did Lumo do with the lantern?",
+          a: ["Decorated his den", "Guided travelers home", "Played with it", "Traded it for food"],
+          correct: "Guided travelers home",
+        },
       ],
     },
     {
@@ -52,7 +58,11 @@ export default function ListeningPage() {
       She discovered that courage grows when the wind blows hardest.`,
       questions: [
         { q: "What was Nira?", a: ["A rabbit", "A bird", "A squirrel", "A butterfly"], correct: "A bird" },
-        { q: "When did Nira learn to fly?", a: ["During sunrise", "During a thunderstorm", "At night", "In the rain"], correct: "During a thunderstorm" },
+        {
+          q: "When did Nira learn to fly?",
+          a: ["During sunrise", "During a thunderstorm", "At night", "In the rain"],
+          correct: "During a thunderstorm",
+        },
       ],
     },
   ];
@@ -103,22 +113,38 @@ export default function ListeningPage() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-black via-slate-900 to-black text-white px-4 pt-[env(safe-area-inset-top)] pb-20 relative overflow-hidden"
+      className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-black via-slate-900 to-black text-white px-4 pb-20 relative overflow-x-hidden"
     >
-      {/* Header */}
-      <motion.div className="z-10 text-center mb-10 max-w-full flex flex-col items-center gap-2 px-2">
+      {/* FIXED SAFE TOP-LEFT BACK BUTTON */}
+      <a
+        href="/dashboards/StudentDashboard"
+        className="fixed top-3 left-3 z-40 flex items-center gap-1 px-3 py-1.5 
+          bg-white/10 backdrop-blur-md border border-cyan-300/20 
+          rounded-full text-cyan-200 text-sm font-medium 
+          shadow-[0_0_10px_rgba(0,255,255,0.25)] 
+          hover:bg-white/20 transition-all"
+        style={{
+          marginTop: "env(safe-area-inset-top)",
+          transform: "translateZ(0)",
+        }}
+      >
+        ← Back
+      </a>
+
+      {/* HEADER */}
+      <motion.div className="z-10 text-center mb-6 max-w-full flex flex-col items-center gap-2 px-2 mt-10">
         <h1
-          className="font-extrabold bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent flex items-center justify-center gap-2 text-center flex-wrap"
+          className="font-extrabold bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent flex items-center justify-center gap-2 text-center"
           style={{ fontSize: "clamp(1.5rem, 5vw, 2.5rem)" }}
         >
           <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" /> Listening Challenge
         </h1>
-        <p className="text-cyan-200/70 text-center" style={{ fontSize: "clamp(0.875rem, 3vw, 1rem)" }}>
+        <p className="text-cyan-200/70 text-center text-sm sm:text-base">
           Listen carefully and answer the questions 🎧
         </p>
       </motion.div>
 
-      {/* Buttons */}
+      {/* BUTTONS */}
       <div className="z-10 flex flex-wrap gap-4 mb-6 justify-center">
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -139,12 +165,13 @@ export default function ListeningPage() {
                 : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90"
             }`}
           >
-            <Volume2 className="inline w-4 md:w-5 h-4 md:h-5 mr-2" /> {isPlaying ? "Playing..." : "Listen to Story"}
+            <Volume2 className="inline w-4 md:w-5 h-4 md:h-5 mr-2" />
+            {isPlaying ? "Playing..." : "Listen to Story"}
           </motion.button>
         )}
       </div>
 
-      {/* Story Title Display */}
+      {/* STORY TITLE */}
       {title && story && (
         <motion.div
           initial={{ opacity: 0, y: -15 }}
@@ -152,15 +179,15 @@ export default function ListeningPage() {
           transition={{ duration: 0.5 }}
           className="z-10 mb-6 px-5 py-3 max-w-md mx-auto rounded-2xl bg-white/10 backdrop-blur-md border border-cyan-400/20 shadow-[0_0_15px_rgba(0,255,255,0.3)] text-center"
         >
-          <h2 className="text-lg md:text-xl font-bold bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent drop-shadow-md">
+          <h2 className="text-sm md:text-lg font-bold bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent drop-shadow-md">
             🎧 {title}
           </h2>
         </motion.div>
       )}
 
-      {/* Questions */}
+      {/* QUESTIONS */}
       {questions.length > 0 && !showResult && (
-        <div className="z-10 w-full max-w-full md:max-w-4xl space-y-6 md:space-y-6 px-2">
+        <div className="z-10 w-full max-w-full md:max-w-4xl space-y-6 px-2">
           <h2 className="text-lg md:text-xl font-bold flex items-center gap-2 text-transparent bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text">
             <Brain className="text-cyan-300" /> Comprehension Questions
           </h2>
@@ -168,10 +195,10 @@ export default function ListeningPage() {
           {questions.map((q, i) => (
             <motion.div
               key={i}
-              className="p-3 md:p-5 rounded-2xl bg-white/10 border border-cyan-400/20 shadow-lg backdrop-blur-md"
+              className="p-4 md:p-5 rounded-2xl bg-white/10 border border-cyan-400/20 shadow-lg backdrop-blur-md"
               whileHover={{ scale: 1.02 }}
             >
-              <p className="font-semibold text-cyan-100 mb-3 md:mb-4" style={{ fontSize: "clamp(0.9rem, 3vw, 1.15rem)" }}>
+              <p className="font-semibold text-cyan-100 mb-3 md:mb-4 text-sm md:text-base">
                 {i + 1}. {q.q}
               </p>
 
@@ -181,7 +208,7 @@ export default function ListeningPage() {
                     key={opt}
                     whileHover={{ scale: 1.03 }}
                     onClick={() => setUserAnswers({ ...userAnswers, [i]: opt })}
-                    className={`px-3 md:px-4 py-1.5 md:py-2 rounded-xl text-sm md:text-base font-medium transition-all ${
+                    className={`px-3 py-2 rounded-xl text-sm md:text-base font-medium transition-all ${
                       userAnswers[i] === opt
                         ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white shadow-md"
                         : "bg-white/10 hover:bg-white/20 text-gray-200"
@@ -197,18 +224,21 @@ export default function ListeningPage() {
           <motion.button
             whileHover={{ scale: 1.08 }}
             onClick={checkAnswers}
-            className="bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white px-4 md:px-6 py-2 md:py-3 rounded-full font-semibold shadow-lg hover:opacity-90 transition-all mx-auto block text-sm md:text-base"
+            className="bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white px-4 py-2 rounded-full font-semibold shadow-lg hover:opacity-90 transition-all mx-auto block text-sm md:text-base"
           >
             Check Answers
           </motion.button>
         </div>
       )}
 
-      {/* Result Modal */}
+      {/* RESULT MODAL */}
       <AnimatePresence>
         {showResult && (
           <motion.div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-md z-20 px-4">
-            <motion.div ref={resultBoxRef} className="relative bg-white rounded-3xl p-8 md:p-10 text-center shadow-2xl border border-gray-200 max-w-sm md:max-w-lg w-full">
+            <motion.div
+              ref={resultBoxRef}
+              className="relative bg-white rounded-3xl p-8 md:p-10 text-center shadow-2xl border border-gray-200 max-w-sm md:max-w-lg w-full"
+            >
               {showConfetti && resultBoxRef.current && (
                 <Confetti
                   width={resultBoxRef.current.offsetWidth}
@@ -224,7 +254,9 @@ export default function ListeningPage() {
               </motion.h2>
 
               <motion.p className="text-gray-700 mb-4 text-base md:text-lg">
-                You scored <span className="font-semibold text-emerald-500">{score}</span> out of <span className="font-semibold">{questions.length}</span>
+                You scored{" "}
+                <span className="font-semibold text-emerald-500">{score}</span>{" "}
+                out of <span className="font-semibold">{questions.length}</span>
               </motion.p>
 
               <div className="flex flex-col md:flex-row gap-3 justify-center">
@@ -242,7 +274,7 @@ export default function ListeningPage() {
         )}
       </AnimatePresence>
 
-      <footer className="mt-auto pb-[env(safe-area-inset-bottom)] text-xs md:text-sm text-cyan-300/80 font-mono tracking-wide pt-10">
+      <footer className="mt-auto pb-6 text-xs md:text-sm text-cyan-300/80 font-mono tracking-wide pt-10">
         CompreHub — Listen, Understand ⚡
       </footer>
     </motion.div>
