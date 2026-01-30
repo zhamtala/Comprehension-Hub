@@ -5,11 +5,27 @@ import { BookOpen, Headphones, FileText, Library, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+/* ================= TYPES ================= */
+type BreakdownItem = {
+  difficulty: string;
+  percentage: number;
+};
+
+type BreakdownData = {
+  grammar?: BreakdownItem[];
+  comprehension?: BreakdownItem[];
+};
+
 export default function StudentDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<{ name: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState({
+    grammar: 0,
+    comprehension: 0,
+  });
 
+  /* ================= AUTH CHECK ================= */
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -18,11 +34,8 @@ export default function StudentDashboard() {
       return;
     }
 
-    // Optional: verify token by calling a protected route
     fetch("http://localhost:5000/api/users", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
         if (res.status === 401 || res.status === 403) {
@@ -31,30 +44,50 @@ export default function StudentDashboard() {
           router.push("/login");
           return;
         }
-
-        // TEMP: until you add /me endpoint
         setUser({ name: "Student" });
+      })
+      .catch(() => router.push("/login"));
+  }, []);
+
+  /* ================= FETCH ACHIEVEMENTS PROGRESS ================= */
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch("http://localhost:5000/api/progress/breakdown", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data: BreakdownData) => {
+        const calculateAverage = (items?: BreakdownItem[]) => {
+          if (!items || items.length === 0) return 0;
+          const total = items.reduce((sum, item) => sum + item.percentage, 0);
+          return Math.round(total / items.length);
+        };
+
+        setProgress({
+          grammar: calculateAverage(data.grammar),
+          comprehension: calculateAverage(data.comprehension),
+        });
+
         setLoading(false);
       })
-      .catch(() => {
-        router.push("/login");
+      .catch((err) => {
+        console.error("Failed to load dashboard progress", err);
+        setLoading(false);
       });
   }, []);
 
-
+  /* ================= STATIC MODULES ================= */
   const modules = [
     { name: "Grammar", icon: <BookOpen className="w-6 h-6" />, color: "from-cyan-400 to-blue-500", path: "/grammar" },
+     { name: "Comprehension", icon: <BookOpen className="w-6 h-6" />, color: "from-cyan-400 to-fuchsia-500", path: "/comprehension/play" },
     { name: "Reading", icon: <FileText className="w-6 h-6" />, color: "from-fuchsia-400 to-pink-500", path: "/reading" },
     { name: "Listening", icon: <Headphones className="w-6 h-6" />, color: "from-emerald-400 to-teal-500", path: "/listening" },
     { name: "Dictionary", icon: <Library className="w-6 h-6" />, color: "from-yellow-400 to-orange-500", path: "/dictionary" },
-    { name: "Comprehension", icon: <BookOpen className="w-6 h-6" />, color: "from-cyan-400 to-fuchsia-500", path: "/comprehension/play" },
   ];
-  const progress = {
-    grammar: 80,
-    comprehension: 65,
-  };
 
-    if (loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black text-cyan-300 font-mono">
         Verifying access…
@@ -71,97 +104,74 @@ export default function StudentDashboard() {
       {/* Background Effects */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,255,0.07),transparent_60%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.05)_1px,transparent_1px)] bg-[size:50px_50px]" />
-      <motion.div className="absolute -top-40 left-20 h-72 w-72 sm:h-96 sm:w-96 rounded-full bg-blue-500/20 blur-3xl" animate={{ x: [0, 40, 0], y: [0, 30, 0] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} />
-      <motion.div className="absolute bottom-0 right-0 h-72 w-72 sm:h-96 sm:w-96 rounded-full bg-fuchsia-500/20 blur-3xl" animate={{ x: [0, -50, 0], y: [0, -20, 0] }} transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }} />
 
       {/* Header + Buttons */}
-      <div className="z-10 flex flex-col sm:flex-row justify-between items-center w-full max-w-6xl mb-6 gap-4 sm:gap-0">
-        <h1 className="text-3xl sm:text-4xl font-extrabold drop-shadow-[0_0_20px_rgba(0,255,255,0.3)] text-center sm:text-left w-full sm:w-auto">
-          Welcome back, <span className="bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent">{user?.name || "Student"}</span> 👋
+      <div className="z-10 flex flex-col sm:flex-row justify-between items-center w-full max-w-6xl mb-6 gap-4">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-center sm:text-left">
+          Welcome back,{" "}
+          <span className="bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent">
+            {user?.name}
+          </span>{" "}
+          👋
         </h1>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            localStorage.removeItem("token");
-            localStorage.removeItem("userId");
-            router.push("/login");
-          }}
-          className="flex items-center gap-2 bg-red-500/20 border border-red-400/30 text-red-300 px-4 py-2 rounded-full font-semibold text-sm hover:bg-red-500/30 transition">
-          <LogOut className="w-4 h-4" />
-          Logout
-        </motion.button>
 
-        {/* Mobile: Buttons centered */}
+        {/* Buttons Container */}
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-center">
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => router.push("/select")}
-            className="bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-semibold text-sm sm:text-base shadow-lg hover:opacity-90 transition w-full sm:w-auto text-center"
+            className="bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-semibold text-sm sm:text-base shadow-lg hover:opacity-90 w-full sm:w-auto text-center"
           >
             Back to Selection
           </motion.button>
 
-          {/* Mobile: Next to back button, centered */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => router.push("/dashboards/Achievements")}
-            className="bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-semibold text-sm sm:text-base shadow-lg hover:opacity-90 transition w-full sm:hidden text-center"
+            onClick={() => {
+              localStorage.removeItem("token");
+              localStorage.removeItem("userId");
+              router.push("/login");
+            }}
+            className="flex items-center gap-2 bg-red-500/20 border border-red-400/30 text-red-300 px-4 py-2 rounded-full font-semibold text-sm w-full sm:w-auto justify-center"
           >
-            View Achievements
+            <LogOut className="w-4 h-4" />
+            Logout
           </motion.button>
         </div>
       </div>
 
       {/* Progress Stats */}
-<div className="z-10 w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
-  {Object.entries(progress).map(([key, value]) => (
-    <motion.div
-      key={key}
-      whileHover={{ scale: 1.03 }}
-      className="
-        flex flex-col
-        justify-between
-        rounded-2xl
-        bg-white/10
-        backdrop-blur-md
-        border border-cyan-400/20
-        shadow-lg
-        px-4 py-3
-        sm:px-6 sm:py-5
-      "
-    >
-      {/* Title */}
-      <h2 className="text-sm sm:text-lg font-semibold capitalize text-cyan-300 mb-2">
-        {key} Progress
-      </h2>
+      <div className="z-10 w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
+        {Object.entries(progress).map(([key, value]) => (
+          <motion.div
+            key={key}
+            whileHover={{ scale: 1.03 }}
+            className="rounded-2xl bg-white/10 backdrop-blur-md border border-cyan-400/20 shadow-lg px-4 py-4"
+          >
+            <h2 className="text-sm sm:text-lg font-semibold capitalize text-cyan-300 mb-2">
+              {key} Progress
+            </h2>
 
-      {/* Progress Bar */}
-      <div className="w-full bg-white/20 rounded-full h-1.5 sm:h-3 overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${value}%` }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500"
-        />
-      </div>
-      
-      {/* Percentage */}
-      <p className="mt-2 text-xs sm:text-base text-white/90 font-medium">
-        {value}% Complete
-      </p>
+            <div className="w-full bg-white/20 rounded-full h-2 sm:h-3 overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${value}%` }}
+                transition={{ duration: 0.8 }}
+                className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500"
+              />
+            </div>
+
+            <p className="mt-2 text-xs sm:text-base text-white/90 font-medium">
+              {value}% Complete
+            </p>
           </motion.div>
-      ))}
+        ))}
       </div>
-
 
       {/* Learning Modules */}
-      <h2 className="z-10 text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent text-center w-full">
-        Your Learning Modules
-      </h2>
-      <div className="z-10 w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+      <div className="z-10 w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
         {modules.map((module, i) => (
           <motion.a
             key={module.name}
@@ -169,22 +179,31 @@ export default function StudentDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 + i * 0.1 }}
-            whileHover={{ scale: 1.08, boxShadow: "0 0 30px rgba(0,255,255,0.3)" }}
-            className={`p-4 sm:p-6 bg-gradient-to-r ${module.color} text-white rounded-2xl shadow-lg flex flex-col items-center justify-center text-center transition-transform`}
+            whileHover={{ scale: 1.08 }}
+            className={`p-6 bg-gradient-to-r ${module.color} rounded-2xl text-white flex flex-col items-center`}
           >
             <div className="bg-white/20 p-3 rounded-full mb-3">{module.icon}</div>
-            <h3 className="text-lg sm:text-xl font-semibold mb-1">{module.name}</h3>
-            <p className="text-sm sm:text-base opacity-90">Explore interactive lessons and AI quizzes.</p>
+            <h3 className="text-lg font-semibold">{module.name}</h3>
           </motion.a>
         ))}
       </div>
 
-      {/* Desktop: View Achievements Button at Bottom */}
+      {/* Desktop View Achievements Button */}
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => router.push("/dashboards/Achievements")}
         className="hidden sm:inline z-10 mb-12 bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:opacity-90 transition"
+      >
+        View Achievements
+      </motion.button>
+
+      {/* Mobile View Achievements Button */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => router.push("/dashboards/Achievements")}
+        className="sm:hidden z-10 mb-12 bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:opacity-90 transition"
       >
         View Achievements
       </motion.button>

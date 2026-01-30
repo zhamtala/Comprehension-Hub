@@ -18,7 +18,7 @@ app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/activities", activityRoutes);
-app.use("/api", progressRoutes);
+app.use("/api/progress", progressRoutes);
 
 const PORT = process.env.PORT || 5000;
 
