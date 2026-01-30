@@ -68,17 +68,11 @@ const highlightError = (
     : "text-red-400 underline decoration-red-400 font-semibold";
 
   return (
-    <motion.p
-      key={sentence}
-      className="text-base sm:text-lg md:text-xl font-light leading-relaxed mb-4 text-white"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-    >
+    <p className="text-base sm:text-lg md:text-xl font-light leading-relaxed mb-4 text-white">
       {parts[0]}
       <span className={colorClass}>{incorrectWord}</span>
       {parts.slice(1).join(incorrectWord)}
-    </motion.p>
+    </p>
   );
 };
 
@@ -116,12 +110,38 @@ export default function GrammarQuiz() {
     }
   };
 
-  const handleNext = () => {
+  const submitGrammarProgress = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      await fetch("http://localhost:5000/api/activities/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          activityType: "grammar",
+          difficulty: "standard", // grammar has no difficulty levels
+          score,
+          total: quizData.length,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to submit grammar progress", err);
+    }
+  };
+
+  const handleNext = async () => {
     setUserAnswer(null);
     setFeedback(null);
-    if (currentQuestionIndex + 1 < quizData.length)
+
+    if (currentQuestionIndex + 1 < quizData.length) {
       setCurrentQuestionIndex((i) => i + 1);
-    else setIsQuizFinished(true);
+    } else {
+      setIsQuizFinished(true);
+      await submitGrammarProgress(); // ✅ backend integration
+    }
   };
 
   // --- Quiz Finished View (UPDATED WITH NEW BUTTONS) ---
@@ -214,7 +234,7 @@ export default function GrammarQuiz() {
       ))}
 
       <motion.div
-        key={currentQuestion.id}
+        key={currentQuestionIndex} // animate only when question changes
         className="relative w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 p-4 rounded-2xl shadow-lg overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -308,7 +328,7 @@ export default function GrammarQuiz() {
       animate={{ opacity: 1 }}
     >
       <motion.div
-        key={currentQuestion.id}
+        key={currentQuestionIndex} // animate only when question changes
         className="relative w-full max-w-3xl bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-2xl shadow-[0_0_40px_rgba(99,102,241,0.3)] overflow-hidden"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}

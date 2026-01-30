@@ -119,6 +119,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/passwords/forgot-password/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/passwords/forgot-password">> = Specific
+  const handler = {} as typeof import("../../app/passwords/forgot-password/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/passwords/reset-password/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/passwords/reset-password">> = Specific
+  const handler = {} as typeof import("../../app/passwords/reset-password/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/reading/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/reading">> = Specific

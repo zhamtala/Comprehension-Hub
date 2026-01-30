@@ -84,13 +84,42 @@ export default function ComprehensionPage() {
     }
   };
 
-  const checkAnswers = () => {
+  const checkAnswers = async () => {
     let correctCount = 0;
     questions.forEach((q, i) => {
       if (userAnswers[i] === q.correct) correctCount++;
     });
+
     setScore(correctCount);
     setShowResult(true);
+
+    try {
+      const token = localStorage.getItem("token");
+
+      await fetch("http://localhost:5000/api/activities/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          activityType: "comprehension",
+          difficulty,
+          score: correctCount,
+          total: questions.length,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to save comprehension progress", err);
+    }
+
+    if (correctCount > 0) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 2000);
+    }
+
+    setCompletedDifficulties([...completedDifficulties, difficulty]);
+
     if (correctCount > 0) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 2000);

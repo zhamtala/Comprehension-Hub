@@ -3,6 +3,12 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { createUser, findUserByEmail } from "../models/userModel.js";
 import { validatePassword } from "../utils/passwordValidator.js";
+import crypto from "crypto";
+import {
+  saveResetToken,
+  findUserByResetToken,
+  updatePassword,
+} from "../models/userModel.js";
 
 dotenv.config();
 
@@ -31,7 +37,7 @@ export async function loginUser(req, res) {
     }
 
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { id: user.id, email: user.email },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
@@ -82,6 +88,88 @@ export async function registerUser(req, res) {
     });
   } catch (err) {
     console.error("Register error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+}
+/* =========================
+   REQUEST PASSWORD RESET
+========================= */
+export async function requestPasswordReset(req, res) {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  try {
+    const user = await findUserByEmail(email);
+
+    // Prevent user enumeration
+    if (!user) {
+      return res.json({ success: true });
+    }
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
+
+    const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    await saveResetToken(user.id, hashedToken, expiry);
+
+    // TODO: Replace with real email sending
+    console.log(`🔐 PASSWORD RESET LINK:
+http://localhost:3000/passwords/reset-password?token=${rawToken}`);
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+}
+
+/* =========================
+   RESET PASSWORD
+========================= */
+export async function resetPassword(req, res) {
+  const { token, password } = req.body;
+
+  if (!token || !password) {
+    return res.status(400).json({ error: "Invalid request" });
+  }
+
+  try {
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    const user = await findUserByResetToken(hashedToken);
+
+    if (!user) {
+      return res.status(400).json({ error: "Token expired or invalid" });
+    }
+
+    // Validate password rules
+    const { valid, failedRules } = validatePassword(password);
+
+    if (!valid) {
+      return res.status(400).json({
+        error: "Password does not meet requirements",
+        failedRules,
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    await updatePassword(user.id, hashedPassword);
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("Reset password error:", err);
     return res.status(500).json({ error: "Server error" });
   }
 }

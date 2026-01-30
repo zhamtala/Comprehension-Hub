@@ -6,6 +6,8 @@ dotenv.config();
 
 import userRoutes from "./routes/users.js";
 import authRoutes from "./routes/authRoutes.js";
+import activityRoutes from "./routes/activityRoutes.js";
+import progressRoutes from "./routes/progressRoutes.js";
 import db from "./db.js";
 
 const app = express();
@@ -15,6 +17,8 @@ app.use(express.json());
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/activities", activityRoutes);
+app.use("/api", progressRoutes);
 
 const PORT = process.env.PORT || 5000;
 

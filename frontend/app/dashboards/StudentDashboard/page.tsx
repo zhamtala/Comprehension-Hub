@@ -51,8 +51,7 @@ export default function StudentDashboard() {
   ];
   const progress = {
     grammar: 80,
-    reading: 65,
-    listening: 50,
+    comprehension: 65,
   };
 
     if (loading) {
@@ -117,17 +116,46 @@ export default function StudentDashboard() {
       </div>
 
       {/* Progress Stats */}
-      <div className="z-10 w-full max-w-6xl grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
-        {Object.entries(progress).map(([key, value]) => (
-          <motion.div key={key} whileHover={{ scale: 1.05 }} className="p-3 sm:p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-cyan-400/20 shadow-lg">
-            <h2 className="text-lg sm:text-xl font-semibold capitalize mb-1 text-cyan-300">{key} Progress</h2>
-            <div className="w-full bg-white/20 h-2 sm:h-3 rounded-full mb-2">
-              <div className="h-2 sm:h-3 rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 transition-all duration-700" style={{ width: `${value}%` }}></div>
-            </div>
-            <p className="text-white font-medium text-sm sm:text-base">{value}% Complete</p>
-          </motion.div>
-        ))}
+<div className="z-10 w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
+  {Object.entries(progress).map(([key, value]) => (
+    <motion.div
+      key={key}
+      whileHover={{ scale: 1.03 }}
+      className="
+        flex flex-col
+        justify-between
+        rounded-2xl
+        bg-white/10
+        backdrop-blur-md
+        border border-cyan-400/20
+        shadow-lg
+        px-4 py-3
+        sm:px-6 sm:py-5
+      "
+    >
+      {/* Title */}
+      <h2 className="text-sm sm:text-lg font-semibold capitalize text-cyan-300 mb-2">
+        {key} Progress
+      </h2>
+
+      {/* Progress Bar */}
+      <div className="w-full bg-white/20 rounded-full h-1.5 sm:h-3 overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${value}%` }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500"
+        />
       </div>
+      
+      {/* Percentage */}
+      <p className="mt-2 text-xs sm:text-base text-white/90 font-medium">
+        {value}% Complete
+      </p>
+          </motion.div>
+      ))}
+      </div>
+
 
       {/* Learning Modules */}
       <h2 className="z-10 text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent text-center w-full">

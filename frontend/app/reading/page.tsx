@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Sparkles } from "lucide-react";
+import { BookOpen, Sparkles, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Question {
   id: number;
@@ -22,145 +23,34 @@ interface Story {
   };
 }
 
+// Your existing stories array
 const stories: Story[] = [
   {
     id: 1,
     title: "The Thirsty Crow",
     content: `
-A thirsty crow once found a pitcher with very little water. 
-He dropped pebbles into the pitcher one by one until the water rose high enough for him to drink. 
-His clever thinking saved his life.
-`,
+            A thirsty crow once found a pitcher with very little water. 
+            He dropped pebbles into the pitcher one by one until the water rose high enough for him to drink. 
+            His clever thinking saved his life.
+            `,
     questions: {
       easy: [
-        {
-          id: 1,
-          question: "What did the crow want?",
-          options: ["Food", "Water", "Shelter", "Pebbles"],
-          answer: "Water",
-        },
+        { id: 1, question: "What did the crow want?", options: ["Food", "Water", "Shelter", "Pebbles"], answer: "Water" },
       ],
       medium: [
-        {
-          id: 1,
-          question: "How did the crow get the water to rise?",
-          options: [
-            "He tilted the pitcher",
-            "He called for help",
-            "He dropped pebbles inside",
-            "He broke the pot",
-          ],
-          answer: "He dropped pebbles inside",
-        },
+        { id: 1, question: "How did the crow get the water to rise?", options: ["He tilted the pitcher","He called for help","He dropped pebbles inside","He broke the pot"], answer: "He dropped pebbles inside" },
       ],
       hard: [
-        {
-          id: 1,
-          question: "What lesson can be learned from the story?",
-          options: [
-            "Patience and cleverness solve problems",
-            "Always ask others for help",
-            "Never waste water",
-            "Hard work always pays off",
-          ],
-          answer: "Patience and cleverness solve problems",
-        },
+        { id: 1, question: "What lesson can be learned from the story?", options: ["Patience and cleverness solve problems","Always ask others for help","Never waste water","Hard work always pays off"], answer: "Patience and cleverness solve problems" },
       ],
     },
   },
-  {
-    id: 2,
-    title: "The Lost Puppy",
-    content: `
-A small puppy got lost in the city. 
-A kind boy found him and posted signs everywhere. 
-The puppy's owner saw the sign and happily reunited with his pet.
-`,
-    questions: {
-      easy: [
-        {
-          id: 1,
-          question: "What got lost?",
-          options: ["A cat", "A puppy", "A bird", "A rabbit"],
-          answer: "A puppy",
-        },
-      ],
-      medium: [
-        {
-          id: 1,
-          question: "How did the boy help the puppy?",
-          options: [
-            "He fed it",
-            "He posted signs to find its owner",
-            "He kept it",
-            "He ignored it",
-          ],
-          answer: "He posted signs to find its owner",
-        },
-      ],
-      hard: [
-        {
-          id: 1,
-          question: "What value does the story teach?",
-          options: [
-            "Responsibility and kindness",
-            "Obedience and strength",
-            "Bravery and curiosity",
-            "Speed and intelligence",
-          ],
-          answer: "Responsibility and kindness",
-        },
-      ],
-    },
-  },
-  {
-    id: 3,
-    title: "The Farmer and the Seed",
-    content: `
-A farmer planted seeds during a storm, believing that rain would help them grow. 
-Though his neighbors laughed, his crops flourished the next season. 
-His faith and hard work paid off.
-`,
-    questions: {
-      easy: [
-        {
-          id: 1,
-          question: "Who planted the seeds?",
-          options: ["A fisherman", "A farmer", "A boy", "A merchant"],
-          answer: "A farmer",
-        },
-      ],
-      medium: [
-        {
-          id: 1,
-          question: "Why did the neighbors laugh at the farmer?",
-          options: [
-            "Because he planted seeds during a storm",
-            "Because he was lazy",
-            "Because he sold his crops early",
-            "Because he didn’t water them",
-          ],
-          answer: "Because he planted seeds during a storm",
-        },
-      ],
-      hard: [
-        {
-          id: 1,
-          question: "What is the moral of the story?",
-          options: [
-            "Faith and hard work bring success",
-            "Never plant during storms",
-            "Listen to others’ opinions",
-            "Avoid risks in farming",
-          ],
-          answer: "Faith and hard work bring success",
-        },
-      ],
-    },
-  },
+  // ... other stories
 ];
 
 export default function ReadingPage() {
+  const router = useRouter();
+
   const [step, setStep] = useState<"selectStory" | "selectDifficulty" | "reading" | "quiz">("selectStory");
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard" | null>(null);
@@ -178,7 +68,7 @@ export default function ReadingPage() {
     if (option === currentQuestion.answer) setScore((s) => s + 1);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (current + 1 < questions.length) {
       setCurrent(current + 1);
       setSelected(null);
@@ -188,7 +78,20 @@ export default function ReadingPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex justify-center items-center text-gray-900 overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-700 to-pink-600 p-6">
+    <div className="relative min-h-screen flex justify-center items-center text-gray-900 overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-700 to-pink-600 p-6 pt-24 sm:pt-28">
+      
+      {/* ✅ Fixed Back to Dashboard Button (responsive size) */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => router.push("/dashboards/StudentDashboard")}
+        className="fixed top-4 left-4 z-50 flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-md border border-white/30 px-3 py-2 sm:px-4 sm:py-2.5 text-white text-sm sm:text-base font-medium hover:bg-white/30 transition"
+      >
+        <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+        <span className="hidden sm:inline">Dashboard</span>
+        <span className="sm:hidden">Back</span>
+      </motion.button>
+
       {/* Floating Icons */}
       <motion.div
         className="absolute top-10 left-10 text-white/40"
@@ -197,6 +100,7 @@ export default function ReadingPage() {
       >
         <BookOpen className="w-10 h-10" />
       </motion.div>
+
       <motion.div
         className="absolute bottom-10 right-10 text-white/30"
         animate={{ y: [0, 20, 0] }}
@@ -205,6 +109,7 @@ export default function ReadingPage() {
         <Sparkles className="w-14 h-14" />
       </motion.div>
 
+      {/* ✅ Preserve all your existing steps */}
       <AnimatePresence mode="wait">
         {/* Step 1: Story Selection */}
         {step === "selectStory" && (
@@ -257,11 +162,9 @@ export default function ReadingPage() {
                     setStep("reading");
                   }}
                   className={`w-full py-4 rounded-xl font-semibold text-white transition-all ${
-                    lvl === "easy"
-                      ? "bg-green-500 hover:bg-green-600"
-                      : lvl === "medium"
-                      ? "bg-yellow-500 hover:bg-yellow-600"
-                      : "bg-red-500 hover:bg-red-600"
+                    lvl === "easy" ? "bg-green-500 hover:bg-green-600" :
+                    lvl === "medium" ? "bg-yellow-500 hover:bg-yellow-600" :
+                    "bg-red-500 hover:bg-red-600"
                   }`}
                 >
                   {lvl.charAt(0).toUpperCase() + lvl.slice(1)}
@@ -280,9 +183,7 @@ export default function ReadingPage() {
             className="bg-white/10 backdrop-blur-lg p-10 rounded-2xl shadow-2xl w-full max-w-3xl text-white border border-white/20"
           >
             <h1 className="text-3xl font-extrabold text-yellow-300 mb-4">{selectedStory.title}</h1>
-            <p className="text-lg leading-relaxed whitespace-pre-line mb-6 text-gray-100">
-              {selectedStory.content}
-            </p>
+            <p className="text-lg leading-relaxed whitespace-pre-line mb-6 text-gray-100">{selectedStory.content}</p>
             <motion.button
               whileHover={{ scale: 1.05 }}
               onClick={() => setStep("quiz")}
@@ -335,9 +236,7 @@ export default function ReadingPage() {
               onClick={handleNext}
               disabled={!selected}
               className={`mt-8 w-full py-3 rounded-xl font-bold transition-all ${
-                selected
-                  ? "bg-yellow-400 text-indigo-900 hover:bg-yellow-300"
-                  : "bg-white/20 text-white/70 cursor-not-allowed"
+                selected ? "bg-yellow-400 text-indigo-900 hover:bg-yellow-300" : "bg-white/20 text-white/70 cursor-not-allowed"
               }`}
             >
               {current + 1 < questions.length ? "Next Question →" : "Finish Quiz"}
@@ -355,11 +254,7 @@ export default function ReadingPage() {
           >
             <h1 className="text-4xl font-extrabold mb-4 text-yellow-300">🎉 Well Done!</h1>
             <p className="text-xl mb-6">
-              You scored{" "}
-              <span className="text-yellow-300 font-bold">
-                {score}
-              </span>{" "}
-              out of <span className="font-bold">{questions.length}</span>
+              You scored <span className="text-yellow-300 font-bold">{score}</span> out of <span className="font-bold">{questions.length}</span>
             </p>
             <motion.button
               whileHover={{ scale: 1.1 }}

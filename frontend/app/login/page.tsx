@@ -283,9 +283,14 @@ export default function LoginPage() {
                 <input type="checkbox" className="accent-cyan-400" />
                 <span className="text-xs">Remember access</span>
               </label>
-              <button type="button" className="hover:underline hover:text-fuchsia-300 transition text-xs">
+              <button
+                type="button"
+                onClick={() => router.push("/passwords/forgot-password")}
+                className="hover:underline hover:text-fuchsia-300 transition text-xs"
+              >
                 Forgot key?
               </button>
+
             </div>
           </form>
 

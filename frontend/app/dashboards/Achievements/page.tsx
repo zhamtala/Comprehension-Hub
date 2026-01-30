@@ -2,30 +2,62 @@
 
 import { motion } from "framer-motion";
 import { Award } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function AchievementsPage() {
+  
+  const [progress, setProgress] = useState({
+    grammar: 0,
+    comprehension: 0,
+    reading: 0,
+    listening: 0,
+
+  });
+
+    useEffect(() => {
+    const loadProgress = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await fetch("http://localhost:5000/api/progress", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+        setProgress(data);
+      } catch (err) {
+        console.error("Failed to load achievements", err);
+      }
+    };
+
+    loadProgress();
+  }, []);
+
   const achievements = [
     {
       name: "Grammar Mastery",
-      progress: 80,
+      progress: progress.grammar,
       color: "from-cyan-400 to-blue-500",
     },
     {
-      name: "Reading Comprehension",
-      progress: 65,
+      name: "Comprehension Skills",
+      progress: progress.comprehension,
       color: "from-fuchsia-400 to-pink-500",
     },
     {
-      name: "Listening Skills",
-      progress: 50,
+      name: "Reading Skills",
+      progress: progress.reading,
       color: "from-emerald-400 to-teal-500",
     },
     {
-      name: "Vocabulary Builder",
-      progress: 70,
+      name: "Listening Skills",
+      progress: progress.listening,
       color: "from-yellow-400 to-orange-500",
     },
   ];
+
 
   return (
     <motion.div

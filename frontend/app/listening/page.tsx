@@ -16,6 +16,7 @@ export default function ListeningPage() {
   const [score, setScore] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
   const resultBoxRef = useRef<HTMLDivElement>(null);
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard" | null>(null);
 
   const storyList = [
     {
@@ -76,6 +77,7 @@ export default function ListeningPage() {
     setTitle(randomStory.title);
     setUserAnswers({});
     setShowResult(false);
+    setDifficulty(null); // ✅ reset difficulty
   };
 
   const playAudio = async () => {
@@ -103,9 +105,47 @@ export default function ListeningPage() {
     setScore(correctCount);
     setShowResult(true);
 
+    // Show confetti if at least one correct
     if (correctCount > 0) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 2000);
+    }
+
+    // ✅ Submit to backend
+    submitListening();
+  };
+
+  // --- Submit Listening Quiz to Backend ---
+  const submitListening = async () => {
+    if (!difficulty) return;
+
+    const activityData = {
+      activityType: "listening",
+      difficulty,
+      score,
+      total: questions.length,
+    };
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("http://localhost:5000/api/activities/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(activityData),
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err);
+      }
+
+      console.log("Listening saved");
+    } catch (err) {
+      console.error("Listening save failed:", err);
     }
   };
 
@@ -185,8 +225,26 @@ export default function ListeningPage() {
         </motion.div>
       )}
 
+      {/* DIFFICULTY SELECTION */}
+      {story && !difficulty && (
+        <div className="z-10 flex gap-4 mb-6 justify-center">
+          {["easy", "medium", "hard"].map((level) => (
+            <motion.button
+              key={level}
+              whileHover={{ scale: 1.05 }}
+              onClick={() => setDifficulty(level as "easy" | "medium" | "hard")}
+              className="px-5 py-2 rounded-full font-semibold
+                bg-gradient-to-r from-cyan-500 to-fuchsia-500
+                text-white shadow-lg hover:opacity-90 transition-all capitalize"
+            >
+              {level}
+            </motion.button>
+          ))}
+        </div>
+      )}
+
       {/* QUESTIONS */}
-      {questions.length > 0 && !showResult && (
+      {questions.length > 0 && difficulty && !showResult && (
         <div className="z-10 w-full max-w-full md:max-w-4xl space-y-6 px-2">
           <h2 className="text-lg md:text-xl font-bold flex items-center gap-2 text-transparent bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text">
             <Brain className="text-cyan-300" /> Comprehension Questions
