@@ -63,11 +63,7 @@ export default function Home() {
           className="mt-4 sm:mt-6 text-base sm:text-lg text-cyan-100 max-w-xl mx-auto leading-relaxed font-light"
         >
           Boost your comprehension through{" "}
-          <span className="text-fuchsia-300 font-semibold">Technology</span> — explore{" "}
-          <span className="text-cyan-300 font-semibold">Grammar</span>,{" "}
-          <span className="text-purple-300 font-semibold">Reading</span>, and{" "}
-          <span className="text-blue-300 font-semibold">Listening</span>{" "}
-          enhanced by intelligent insights and adaptive progress tracking.
+          <span className="text-fuchsia-300 font-semibold">Technology</span>
         </motion.p>
 
         {/* Get Started Button */}

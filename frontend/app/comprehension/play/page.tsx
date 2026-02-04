@@ -6,7 +6,7 @@ import { Volume2, Brain, Sparkles, LogOut } from "lucide-react";
 import Confetti from "react-confetti";
 import { useRouter } from "next/navigation";
 
-type Difficulty = "easy" | "medium" | "hard";
+type Difficulty = "easy" | "average" | "hard";
 
 export default function ComprehensionPage() {
   const router = useRouter();
@@ -35,19 +35,11 @@ export default function ComprehensionPage() {
 
   const storyList = [
     {
-      title: "The Lost Book",
-      story: `In a quiet village, a boy named Leo discovered an old book in his school library. It was filled with stories that changed every time he read them.`,
+      title: "To the Child Jesus",
+      story: `How, God-child, came To earth in poor cradle? Fortune mocks you when You were just born? Alas! Sad one! As Heavenly King, and comes like a vile human! As Sovereign you do not will But a pastor of your flock!`,
       questions: [
-        { q: "Where did Leo find the book?", a: ["In his house", "In the library", "In a park", "At the beach"], correct: "In the library" },
-        { q: "What was special about the book?", a: ["It glowed", "It changed stories", "It could talk", "It was blank"], correct: "It changed stories" },
-      ],
-    },
-    {
-      title: "The Talking River",
-      story: `Mira loved walking by the river every morning. One day, she heard the water whisper her name and tell her about distant lands.`,
-      questions: [
-        { q: "Where did Mira like to walk?", a: ["In the forest", "By the river", "On the mountain", "In the city"], correct: "By the river" },
-        { q: "What did the river do?", a: ["It glowed", "It whispered her name", "It sang songs", "It was silent"], correct: "It whispered her name" },
+        { q: "Who is the speaker in the verse?", a: ["Jesus", "God", "Author", "Child"], correct: "Author" },
+        { q: "What is the mood of the poem?", a: ["Sad", "Happy", "Confusion", "Anxious"], correct: "Confusion" },
       ],
     },
   ];
@@ -128,16 +120,16 @@ export default function ComprehensionPage() {
   };
 
   const moveToNextDifficulty = () => {
-    if (difficulty === "easy") setDifficulty("medium");
-    else if (difficulty === "medium") setDifficulty("hard");
+    if (difficulty === "easy") setDifficulty("average");
+    else if (difficulty === "average") setDifficulty("hard");
     setCurrentStoryIndex(null);
     generateStory();
   };
 
   const isDifficultyUnlocked = (level: Difficulty) => {
     if (level === "easy") return true;
-    if (level === "medium") return completedDifficulties.includes("easy");
-    if (level === "hard") return completedDifficulties.includes("medium");
+    if (level === "average") return completedDifficulties.includes("easy");
+    if (level === "hard") return completedDifficulties.includes("average");
     return false;
   };
 
@@ -169,7 +161,7 @@ export default function ComprehensionPage() {
 
       {/* Difficulty Selector */}
       <div className="z-10 flex justify-center mb-6 w-full max-w-xs sm:max-w-sm md:max-w-lg mx-auto gap-3 flex-wrap">
-        {(["easy", "medium", "hard"] as Difficulty[]).map((level) => (
+        {(["easy", "average", "hard"] as Difficulty[]).map((level) => (
           <motion.button
             key={level}
             whileHover={{ scale: isDifficultyUnlocked(level) ? 1.05 : 1 }}
@@ -206,7 +198,7 @@ export default function ComprehensionPage() {
             </p>
           )}
 
-          {difficulty === "medium" && (
+          {difficulty === "average" && (
             <>
               <p className="text-gray-100 leading-relaxed mb-3" style={{ fontSize: "clamp(0.9rem, 3.5vw, 1.25rem)" }}>
                 {story}
