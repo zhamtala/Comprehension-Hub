@@ -8,6 +8,8 @@ import userRoutes from "./routes/users.js";
 import authRoutes from "./routes/authRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
 import progressRoutes from "./routes/progressRoutes.js";
+import questionRoutes from "./routes/questionRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import db from "./db.js";
 
 const app = express();
@@ -19,6 +21,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/activities", activityRoutes);
 app.use("/api/progress", progressRoutes);
+app.use("/api/questions", questionRoutes);
+app.use("/api/admin", adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 

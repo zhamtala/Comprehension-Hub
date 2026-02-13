@@ -1,19 +1,24 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { createUser, findUserByEmail } from "../models/userModel.js";
-import { validatePassword } from "../utils/passwordValidator.js";
 import crypto from "crypto";
 import {
+  createUser,
+  findUserByEmail,
   saveResetToken,
   findUserByResetToken,
   updatePassword,
 } from "../models/userModel.js";
+import { validatePassword } from "../utils/passwordValidator.js";
 
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+
+if (!JWT_SECRET) {
+  throw new Error("❌ JWT_SECRET is not defined in .env");
+}
 
 /* =========================
    LOGIN
@@ -37,7 +42,10 @@ export async function loginUser(req, res) {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      {
+        id: user.id,        // ✅ REQUIRED by authMiddleware
+        email: user.email,
+      },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
@@ -63,13 +71,11 @@ export async function registerUser(req, res) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
-  /* 🔐 PASSWORD VALIDATION */
   const { valid, failedRules } = validatePassword(password);
-
   if (!valid) {
     return res.status(400).json({
       error: "Password does not meet security requirements",
-      failedRules, // frontend can map this to checklist UI
+      failedRules,
     });
   }
 
@@ -91,6 +97,7 @@ export async function registerUser(req, res) {
     return res.status(500).json({ error: "Server error" });
   }
 }
+
 /* =========================
    REQUEST PASSWORD RESET
 ========================= */
@@ -103,24 +110,20 @@ export async function requestPasswordReset(req, res) {
 
   try {
     const user = await findUserByEmail(email);
-
-    // Prevent user enumeration
     if (!user) {
-      return res.json({ success: true });
+      return res.json({ success: true }); // prevent enumeration
     }
 
     const rawToken = crypto.randomBytes(32).toString("hex");
-
     const hashedToken = crypto
       .createHash("sha256")
       .update(rawToken)
       .digest("hex");
 
-    const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    const expiry = new Date(Date.now() + 15 * 60 * 1000);
 
     await saveResetToken(user.id, hashedToken, expiry);
 
-    // TODO: Replace with real email sending
     console.log(`🔐 PASSWORD RESET LINK:
 http://localhost:3000/passwords/reset-password?token=${rawToken}`);
 
@@ -148,14 +151,11 @@ export async function resetPassword(req, res) {
       .digest("hex");
 
     const user = await findUserByResetToken(hashedToken);
-
     if (!user) {
       return res.status(400).json({ error: "Token expired or invalid" });
     }
 
-    // Validate password rules
     const { valid, failedRules } = validatePassword(password);
-
     if (!valid) {
       return res.status(400).json({
         error: "Password does not meet requirements",
@@ -164,7 +164,6 @@ export async function resetPassword(req, res) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-
     await updatePassword(user.id, hashedPassword);
 
     return res.json({ success: true });

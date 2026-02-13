@@ -35,7 +35,7 @@ export default function ComprehensionPage() {
 
   const storyList = [
     {
-      title: "To the Child Jesus",
+      title: "To the Child Jesus AMEN!!!!!!!!!!!!!!!!!!!!!",
       story: `How, God-child, came To earth in poor cradle? Fortune mocks you when You were just born? Alas! Sad one! As Heavenly King, and comes like a vile human! As Sovereign you do not will But a pastor of your flock!`,
       questions: [
         { q: "Who is the speaker in the verse?", a: ["Jesus", "God", "Author", "Child"], correct: "Author" },

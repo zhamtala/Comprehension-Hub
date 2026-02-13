@@ -1,8 +1,8 @@
-// File: C:\vscode\Comprehension-Hub\frontend\app\dashboards\Achievements\page.tsx
-import * as entry from '../../../../../app/dashboards/Achievements/page.js'
+// File: C:\vscode\Comprehension-Hub\frontend\app\grammar\page.tsx
+import * as entry from '../../../../app/grammar/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
-type TEntry = typeof import('../../../../../app/dashboards/Achievements/page.js')
+type TEntry = typeof import('../../../../app/grammar/page.js')
 
 type SegmentParams<T extends Object = any> = T extends Record<string, any>
   ? { [K in keyof T]: T[K] extends string ? string | string[] | undefined : never }
