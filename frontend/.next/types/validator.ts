@@ -47,6 +47,51 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 }
 
 
+// Validate ../../app/admin/create/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/admin/create">> = Specific
+  const handler = {} as typeof import("../../app/admin/create/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/admin/edit/[id]/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/admin/edit/[id]">> = Specific
+  const handler = {} as typeof import("../../app/admin/edit/[id]/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/admin/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/admin">> = Specific
+  const handler = {} as typeof import("../../app/admin/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/admin/questions/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/admin/questions">> = Specific
+  const handler = {} as typeof import("../../app/admin/questions/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/admin/upload/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/admin/upload">> = Specific
+  const handler = {} as typeof import("../../app/admin/upload/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/comprehension/play/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/comprehension/play">> = Specific

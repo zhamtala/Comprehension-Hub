@@ -21,10 +21,35 @@
       "static/chunks/main-app.js",
       "static/chunks/app/select/page.js"
     ],
-    "/grammar/page": [
+    "/dashboards/StudentDashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/grammar/page.js"
+      "static/chunks/app/dashboards/StudentDashboard/page.js"
+    ],
+    "/reading/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/reading/page.js"
+    ],
+    "/listening/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/listening/page.js"
+    ],
+    "/dictionary/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dictionary/page.js"
+    ],
+    "/admin/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/page.js"
+    ],
+    "/admin/create/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/create/page.js"
     ]
   }
 }

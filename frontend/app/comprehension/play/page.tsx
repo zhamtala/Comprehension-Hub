@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Volume2, Brain, Sparkles, LogOut } from "lucide-react";
+import { Volume2, Brain, Sparkles } from "lucide-react";
 import Confetti from "react-confetti";
 import { useRouter } from "next/navigation";
 
@@ -11,11 +11,10 @@ type Difficulty = "easy" | "average" | "hard";
 export default function ComprehensionPage() {
   const router = useRouter();
 
-  const [currentStoryIndex, setCurrentStoryIndex] = useState<number | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [completedDifficulties, setCompletedDifficulties] = useState<Difficulty[]>([]);
   const [story, setStory] = useState("");
-  const [questions, setQuestions] = useState<{ q: string; a: string[]; correct: string }[]>([]);
+  const [questions, setQuestions] = useState<{ q: string; a: string[]; correct: string; type: string }[]>([]);
   const [userAnswers, setUserAnswers] = useState<{ [key: number]: string }>({});
   const [isPlaying, setIsPlaying] = useState(false);
   const [title, setTitle] = useState("");
@@ -26,43 +25,51 @@ export default function ComprehensionPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const updateSize = () => setScreenSize({ width: window.innerWidth, height: window.innerHeight });
+      const updateSize = () =>
+        setScreenSize({ width: window.innerWidth, height: window.innerHeight });
       updateSize();
       window.addEventListener("resize", updateSize);
       return () => window.removeEventListener("resize", updateSize);
     }
   }, []);
 
-  const storyList = [
-    {
-      title: "To the Child Jesus AMEN!!!!!!!!!!!!!!!!!!!!!",
-      story: `How, God-child, came To earth in poor cradle? Fortune mocks you when You were just born? Alas! Sad one! As Heavenly King, and comes like a vile human! As Sovereign you do not will But a pastor of your flock!`,
-      questions: [
-        { q: "Who is the speaker in the verse?", a: ["Jesus", "God", "Author", "Child"], correct: "Author" },
-        { q: "What is the mood of the poem?", a: ["Sad", "Happy", "Confusion", "Anxious"], correct: "Confusion" },
-      ],
-    },
-  ];
+  // 🔥 Fetch story + questions from backend
+  const generateStory = async () => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/admin/comprehension?difficulty=${difficulty}`
+      );
 
-  const generateStory = () => {
-    let index = currentStoryIndex;
-    if (index === null) {
-      index = Math.floor(Math.random() * storyList.length);
-      setCurrentStoryIndex(index);
+      const data = await res.json();
+
+      if (!data.story) {
+        setStory("");
+        setQuestions([]);
+        return;
+      }
+
+      setStory(data.story);
+      setTitle(data.title || "Comprehension Story");
+      setQuestions(data.questions);
+      setUserAnswers({});
+      setShowResult(false);
+    } catch (error) {
+      console.error("Failed to fetch comprehension content", error);
     }
-    const randomStory = storyList[index];
-    setStory(randomStory.story);
-    setQuestions(randomStory.questions);
-    setTitle(randomStory.title);
-    setUserAnswers({});
-    setShowResult(false);
   };
+
+  // 🔥 Auto load when difficulty changes
+  useEffect(() => {
+    generateStory();
+  }, [difficulty]);
 
   const playAudio = async () => {
     if (!story) return;
     try {
       setIsPlaying(true);
-      const response = await fetch(`/api/tts?text=${encodeURIComponent(story)}`);
+      const response = await fetch(
+        `/api/tts?text=${encodeURIComponent(story)}`
+      );
       if (!response.ok) throw new Error("Failed to fetch audio");
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
@@ -78,10 +85,38 @@ export default function ComprehensionPage() {
 
   const checkAnswers = async () => {
     let correctCount = 0;
-    questions.forEach((q, i) => {
-      if (userAnswers[i] === q.correct) correctCount++;
-    });
+   questions.forEach((q, i) => {
+    const studentAnswer = userAnswers[i]?.trim().toLowerCase() || "";
 
+    if (!q.correct) return; // skip if no correct answer stored
+
+    if (q.type === "mcq") {
+      if (studentAnswer === q.correct.trim().toLowerCase()) {
+        correctCount++;
+      }
+    }
+
+    if (q.type === "short_answer") {
+
+    const studentAnswer =
+      (userAnswers[i] || "").toLowerCase();
+
+    const acceptableAnswers =
+      (q.correct || "")
+        .toLowerCase()
+        .split("\n")
+        .map(a => a.trim())
+        .filter(a => a.length > 0);
+
+    const matched = acceptableAnswers.some(keyword =>
+      studentAnswer.includes(keyword)
+    );
+
+    if (matched) correctCount++;
+}
+  });
+
+    console.log("Final Score:", correctCount);
     setScore(correctCount);
     setShowResult(true);
 
@@ -110,20 +145,14 @@ export default function ComprehensionPage() {
       setTimeout(() => setShowConfetti(false), 2000);
     }
 
-    setCompletedDifficulties([...completedDifficulties, difficulty]);
-
-    if (correctCount > 0) {
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 2000);
+    if (!completedDifficulties.includes(difficulty)) {
+      setCompletedDifficulties([...completedDifficulties, difficulty]);
     }
-    setCompletedDifficulties([...completedDifficulties, difficulty]);
   };
 
   const moveToNextDifficulty = () => {
     if (difficulty === "easy") setDifficulty("average");
     else if (difficulty === "average") setDifficulty("hard");
-    setCurrentStoryIndex(null);
-    generateStory();
   };
 
   const isDifficultyUnlocked = (level: Difficulty) => {
@@ -139,14 +168,17 @@ export default function ComprehensionPage() {
       animate={{ opacity: 1 }}
       className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-black via-slate-900 to-black text-white px-4 pt-[env(safe-area-inset-top)] pb-20 relative overflow-hidden"
     >
-      {/* CONFETTI */}
       {showConfetti && typeof window !== "undefined" && (
         <motion.div className="fixed inset-0 z-[9999] pointer-events-none">
-          <Confetti width={screenSize.width} height={screenSize.height} numberOfPieces={350} recycle={false} />
+          <Confetti
+            width={screenSize.width}
+            height={screenSize.height}
+            numberOfPieces={350}
+            recycle={false}
+          />
         </motion.div>
       )}
 
-      {/* Header */}
       <motion.div className="z-10 text-center mb-10 max-w-full flex flex-col items-center gap-2 px-2">
         <h1
           className="font-extrabold bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent flex items-center justify-center gap-2 text-center flex-wrap"
@@ -154,12 +186,14 @@ export default function ComprehensionPage() {
         >
           <Sparkles className="w-6 h-6 sm:w-7 sm:h-7" /> Comprehension Challenge
         </h1>
-        <p className="text-cyan-200/70 text-center" style={{ fontSize: "clamp(0.875rem, 3vw, 1rem)" }}>
+        <p
+          className="text-cyan-200/70 text-center"
+          style={{ fontSize: "clamp(0.875rem, 3vw, 1rem)" }}
+        >
           Sharpen your reading and listening skills 🎧📖
         </p>
       </motion.div>
 
-      {/* Difficulty Selector */}
       <div className="z-10 flex justify-center mb-6 w-full max-w-xs sm:max-w-sm md:max-w-lg mx-auto gap-3 flex-wrap">
         {(["easy", "average", "hard"] as Difficulty[]).map((level) => (
           <motion.button
@@ -169,7 +203,6 @@ export default function ComprehensionPage() {
             onClick={() => {
               if (isDifficultyUnlocked(level)) {
                 setDifficulty(level);
-                generateStory();
               }
             }}
             className={`flex-1 px-4 py-2 rounded-full text-sm md:text-base font-semibold uppercase tracking-wide text-center ${
@@ -185,53 +218,53 @@ export default function ComprehensionPage() {
         ))}
       </div>
 
-      {/* Story Display */}
       {story && (
         <motion.div className="z-10 bg-white/10 border border-cyan-400/20 rounded-3xl p-4 sm:p-6 md:p-8 text-center max-w-full md:max-w-3xl mx-auto mb-8 backdrop-blur-md shadow-2xl w-full">
-          <h2 className="text-cyan-300 font-bold mb-3" style={{ fontSize: "clamp(1.2rem, 5vw, 2rem)" }}>
+          <h2
+            className="text-cyan-300 font-bold mb-3"
+            style={{ fontSize: "clamp(1.2rem, 5vw, 2rem)" }}
+          >
             {title}
           </h2>
 
           {difficulty === "easy" && (
-            <p className="text-gray-100 leading-relaxed" style={{ fontSize: "clamp(0.9rem, 3.5vw, 1.25rem)" }}>
+            <p
+              className="text-gray-100 leading-relaxed"
+              style={{ fontSize: "clamp(0.9rem, 3.5vw, 1.25rem)" }}
+            >
               {story}
             </p>
           )}
 
-          {difficulty === "average" && (
+          {(difficulty === "average" || difficulty === "hard") && (
             <>
-              <p className="text-gray-100 leading-relaxed mb-3" style={{ fontSize: "clamp(0.9rem, 3.5vw, 1.25rem)" }}>
-                {story}
-              </p>
+              {difficulty === "average" && (
+                <p
+                  className="text-gray-100 leading-relaxed mb-3"
+                  style={{ fontSize: "clamp(0.9rem, 3.5vw, 1.25rem)" }}
+                >
+                  {story}
+                </p>
+              )}
+
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 onClick={playAudio}
                 disabled={isPlaying}
                 className={`flex items-center justify-center gap-2 mx-auto mt-2 px-5 md:px-6 py-2 rounded-full font-medium transition-all text-sm md:text-base ${
-                  isPlaying ? "bg-gray-600 cursor-not-allowed" : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90"
+                  isPlaying
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90"
                 }`}
               >
-                <Volume2 className="w-5 h-5" /> {isPlaying ? "Playing..." : "Listen to Story"}
+                <Volume2 className="w-5 h-5" />{" "}
+                {isPlaying ? "Playing..." : "Listen to Story"}
               </motion.button>
             </>
-          )}
-
-          {difficulty === "hard" && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              onClick={playAudio}
-              disabled={isPlaying}
-              className={`flex items-center justify-center gap-2 mx-auto mt-2 px-5 md:px-6 py-2 rounded-full font-medium transition-all text-sm md:text-base ${
-                isPlaying ? "bg-gray-600 cursor-not-allowed" : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90"
-              }`}
-            >
-              <Volume2 className="w-5 h-5" /> {isPlaying ? "Playing..." : "Listen to Story"}
-            </motion.button>
           )}
         </motion.div>
       )}
 
-      {/* Questions */}
       {questions.length > 0 && !showResult && (
         <div className="z-10 w-full max-w-full md:max-w-4xl space-y-4 md:space-y-6 px-2">
           <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2 text-transparent bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text">
@@ -243,16 +276,22 @@ export default function ComprehensionPage() {
               key={i}
               className="p-3 md:p-5 rounded-2xl bg-white/10 border border-cyan-400/20 shadow-lg backdrop-blur-md"
             >
-              <p className="font-semibold text-cyan-100 mb-2 md:mb-3" style={{ fontSize: "clamp(0.9rem, 3vw, 1.15rem)" }}>
+              <p
+                className="font-semibold text-cyan-100 mb-2 md:mb-3"
+                style={{ fontSize: "clamp(0.9rem, 3vw, 1.15rem)" }}
+              >
                 {i + 1}. {q.q}
               </p>
 
+              {q.type === "mcq" && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
                 {q.a.map((opt) => (
                   <motion.button
                     key={opt}
                     whileHover={{ scale: 1.03 }}
-                    onClick={() => setUserAnswers({ ...userAnswers, [i]: opt })}
+                    onClick={() =>
+                      setUserAnswers({ ...userAnswers, [i]: opt })
+                    }
                     className={`px-2 md:px-4 py-2 rounded-xl text-sm md:text-base font-medium transition-all ${
                       userAnswers[i] === opt
                         ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white shadow-md"
@@ -263,6 +302,19 @@ export default function ComprehensionPage() {
                   </motion.button>
                 ))}
               </div>
+            )}
+
+            {q.type === "short_answer" && (
+              <input
+                type="text"
+                placeholder="Type your answer..."
+                value={userAnswers[i] || ""}
+                onChange={(e) =>
+                  setUserAnswers({ ...userAnswers, [i]: e.target.value })
+                }
+                className="w-full px-4 py-2 rounded-xl bg-white/10 border border-cyan-400/20 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              />
+            )}
             </motion.div>
           ))}
 
@@ -275,56 +327,57 @@ export default function ComprehensionPage() {
           </motion.button>
         </div>
       )}
-
-      {/* Result Modal */}
-      <AnimatePresence>
+        <AnimatePresence>
         {showResult && (
-          <motion.div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-md z-20 px-4">
-            <motion.div className="relative bg-white rounded-3xl p-8 md:p-10 text-center shadow-2xl border border-gray-200 max-w-sm md:max-w-lg w-full">
-              <motion.h2 className="text-2xl md:text-3xl font-extrabold mb-3 bg-gradient-to-r from-cyan-500 to-fuchsia-500 bg-clip-text text-transparent">
-                🎉 Challenge Complete!
-              </motion.h2>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 flex items-center justify-center z-[999]"
+          >
+            <motion.div
+              initial={{ scale: 0.7 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.7 }}
+              className="bg-white text-black rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
+            >
+              <h2 className="text-2xl font-bold mb-4">
+                🎉 Your Score
+              </h2>
 
-              <motion.p className="text-gray-700 mb-4 text-base md:text-lg">
-                You scored <span className="font-semibold text-emerald-500">{score}</span> out of <span className="font-semibold">{questions.length}</span>
-              </motion.p>
+              <p className="text-lg mb-4">
+                {score} / {questions.length}
+              </p>
 
-              <motion.p className="text-gray-600 italic mb-6 text-sm md:text-base">
-                {score === questions.length
-                  ? "Perfect score! You truly mastered it 🧠✨"
-                  : score > questions.length / 2
-                  ? "Awesome effort — you're improving fast 🚀"
-                  : "Don’t stop now! Each try makes you stronger 💪"}
-              </motion.p>
+              <p className="mb-6 font-semibold">
+                {Math.round((score / questions.length) * 100)}%
+              </p>
 
-              {/* Buttons */}
-              <div className="flex flex-col md:flex-row gap-3 justify-center">
-                {difficulty !== "hard" && (
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={moveToNextDifficulty}
-                    className="px-6 py-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold w-full md:w-auto"
-                  >
-                    Move to Next Difficulty
-                  </motion.button>
-                )}
-                {difficulty === "hard" && (
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => router.push("/select")}
-                    className="px-6 py-2 rounded-full bg-red-500/80 text-white font-semibold w-full md:w-auto"
-                  >
-                    Back to Selection
-                  </motion.button>
-                )}
-              </div>
+              {difficulty !== "hard" && (
+                <button
+                  onClick={() => {
+                    setShowResult(false);
+                    moveToNextDifficulty();
+                  }}
+                  className="bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white px-6 py-2 rounded-full font-semibold w-full mb-3"
+                >
+                  Next Difficulty
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  setShowResult(false);
+                  generateStory();
+                }}
+                className="border border-gray-400 px-6 py-2 rounded-full w-full"
+              >
+                Try Again
+              </button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
       <footer className="mt-auto pb-[env(safe-area-inset-bottom)] text-xs md:text-sm text-cyan-300/80 font-mono tracking-wide pt-10">
         CompreHub — Read, Listen, Understand ⚡
       </footer>

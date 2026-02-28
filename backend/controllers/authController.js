@@ -44,7 +44,7 @@ export async function loginUser(req, res) {
     const token = jwt.sign(
       {
         id: user.id,        // ✅ REQUIRED by authMiddleware
-        email: user.email,
+        role: user.role,    // ✅ REQUIRED by authMiddleware
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
@@ -54,6 +54,7 @@ export async function loginUser(req, res) {
       success: true,
       token,
       userId: user.id,
+      role: user.role,
     });
   } catch (err) {
     console.error("Login error:", err);

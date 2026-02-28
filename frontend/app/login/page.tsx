@@ -39,13 +39,18 @@ export default function LoginPage() {
     // Save JWT + user ID
     localStorage.setItem("token", data.token);
     localStorage.setItem("userId", data.userId);
+    localStorage.setItem("role", data.role);
 
     // Start the animation
     setShowWelcome(true);
 
     // Redirect after animation
     setTimeout(() => {
-      router.push("/select");
+      if (data.role === "admin") {
+        router.push("/admin"); // or /admin
+      } else {
+        router.push("/select");
+      }
     }, 2500);
 
     } catch (err) {

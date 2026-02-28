@@ -109,3 +109,97 @@ export const getQuestions = async (req, res) => {
     });
   }
 };
+
+export const createQuestion = async (req, res) => {
+  const {
+    activity,
+    difficulty,
+    questionType,
+    questionText,
+    passage,
+    correctAnswer,
+    incorrectAnswer,
+    options,
+    explanation
+  } = req.body;
+
+  try {
+    // ==============================
+    // 1️⃣ Validate ENUM values manually (extra safety)
+    // ==============================
+    const validActivities = ["grammar", "reading", "comprehension", "listening"];
+    const validDifficulties = ["easy", "standard", "average", "hard"];
+    const validTypes = ["mcq", "highlight"];
+
+    if (!validActivities.includes(activity)) {
+      return res.status(400).json({ error: "Invalid activity type" });
+    }
+
+    if (!validDifficulties.includes(difficulty)) {
+      return res.status(400).json({ error: "Invalid difficulty level" });
+    }
+
+    if (!validTypes.includes(questionType)) {
+      return res.status(400).json({ error: "Invalid question type" });
+    }
+
+    // ==============================
+    // 2️⃣ Insert Question
+    // ==============================
+
+    const finalCorrectAnswer =
+      questionType === "highlight"
+        ? incorrectAnswer // must satisfy NOT NULL
+        : correctAnswer;
+
+    const [result] = await db.execute(
+      `
+      INSERT INTO questions2
+      (activity, difficulty, question_type, question_text, passage, correct_answer, incorrect_answer, explanation)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        activity,
+        difficulty,
+        questionType,
+        questionText,
+        passage || null,
+        finalCorrectAnswer,
+        incorrectAnswer || null,
+        explanation || null
+      ]
+    );
+
+    const questionId = result.insertId;
+
+    // ==============================
+    // 3️⃣ Insert MCQ Options
+    // ==============================
+    if (questionType === "mcq") {
+      if (!options || options.length < 2) {
+        return res.status(400).json({ error: "MCQ must have at least 2 options" });
+      }
+
+      const cleanOptions = options.filter(opt => opt.trim() !== "");
+
+      const optionValues = cleanOptions.map(opt => [questionId, opt]);
+
+      await db.query(
+        `INSERT INTO question_options (question_id, option_text) VALUES ?`,
+        [optionValues]
+      );
+    }
+
+    return res.status(201).json({
+      message: "Question created successfully",
+      questionId
+    });
+
+  } catch (err) {
+    console.error("Create question error:", err);
+    return res.status(500).json({
+      error: "Failed to create question"
+    });
+  }
+};
+

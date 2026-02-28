@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import { Brain } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -73,14 +72,40 @@ export default function GrammarQuiz() {
         const data = await res.json();
 
         if (!Array.isArray(data) || data.length === 0) {
-          console.error("No questions returned from backend");
           setQuizData([]);
           setLoading(false);
           return;
         }
 
-        setQuizData(data);
-        setLoading(false);
+        /* =========================
+           MAP + FILTER BAD DATA
+        ========================= */
+
+        const mappedData: QuizItem[] = data
+        .filter((q: any) => q.sentence && q.questionType)
+        .map((q: any) => {
+          if (q.questionType === "mcq") {
+            return {
+              id: q.id,
+              questionType: "mcq",
+              sentence: q.sentence,
+              options: Array.isArray(q.options) ? q.options : [],
+              correctWord: q.correctWord,
+              explanation: q.explanation || "",
+            };
+          } else {
+            return {
+              id: q.id,
+              questionType: "highlight",
+              sentence: q.sentence,
+              incorrectWord: q.incorrectWord,
+              explanation: q.explanation || "",
+            };
+          }
+        });
+
+      setQuizData(mappedData);
+      setLoading(false);
       } catch (err) {
         console.error("Failed to load questions", err);
         setLoading(false);
@@ -152,7 +177,7 @@ export default function GrammarQuiz() {
   };
 
   /* =========================
-     HIGHLIGHT RENDER
+     SAFE HIGHLIGHT RENDER
   ========================= */
 
   const renderHighlight = (
@@ -170,7 +195,8 @@ export default function GrammarQuiz() {
           if (isTarget && !userAnswer)
             className = "underline decoration-cyan-400 font-semibold";
           if (isTarget && userAnswer)
-            className = "text-red-400 underline decoration-red-400 font-semibold";
+            className =
+              "text-red-400 underline decoration-red-400 font-semibold";
 
           return (
             <span key={idx} className={className}>
@@ -241,6 +267,10 @@ export default function GrammarQuiz() {
      QUIZ VIEW
   ========================= */
 
+  const isHighlight =
+    currentQuestion?.questionType === "highlight" &&
+    "incorrectWord" in currentQuestion;
+
   return (
     <div className="min-h-screen bg-black text-white flex justify-center items-center p-4">
       <div className="w-full max-w-3xl bg-white/10 backdrop-blur-xl p-6 rounded-2xl">
@@ -257,17 +287,14 @@ export default function GrammarQuiz() {
 
         {/* Question */}
         <div className="mb-4">
-          {currentQuestion.questionType === "highlight" &&
+          {isHighlight &&
             renderHighlight(
               currentQuestion.sentence,
               currentQuestion.incorrectWord
             )}
 
           {currentQuestion.questionType === "mcq" && (
-            <>
             <p className="text-lg mb-4">{currentQuestion.sentence}</p>
-            {console.log("MCQ Options:", currentQuestion.options)}
-            </>
           )}
         </div>
 
@@ -295,7 +322,7 @@ export default function GrammarQuiz() {
           </div>
         )}
 
-        {/* Next */}
+        {/* Next Button */}
         <button
           onClick={handleNext}
           disabled={!userAnswer && currentQuestion.questionType === "mcq"}
@@ -305,7 +332,9 @@ export default function GrammarQuiz() {
               : "bg-gray-600"
           }`}
         >
-          {currentIndex < quizData.length - 1 ? "Next Question" : "Finish Quiz"}
+          {currentIndex < quizData.length - 1
+            ? "Next Question"
+            : "Finish Quiz"}
         </button>
 
         {/* Feedback */}
