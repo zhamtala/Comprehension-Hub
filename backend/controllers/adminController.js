@@ -577,11 +577,7 @@ export const uploadQuestions = async (req, res) => {
 
     try {
       const [rows] = await db.query(
-        `SELECT id, title, passage
-        FROM stories
-        WHERE activity = ?
-        AND difficulty = ?`,
-        [activity, difficulty]
+        "SELECT id, title, passage FROM stories ORDER BY id ASC"
       );
 
       res.json(rows);

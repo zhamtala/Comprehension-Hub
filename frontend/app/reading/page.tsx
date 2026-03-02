@@ -30,7 +30,7 @@ export default function ReadingPage() {
 
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [difficulty, setDifficulty] = useState<
-    "easy" | "medium" | "hard" | null
+    "easy" | "average" | "hard" | null
   >(null);
 
   const [selected, setSelected] = useState<string | null>(null);
@@ -46,6 +46,8 @@ export default function ReadingPage() {
       try {
         const res = await fetch("http://localhost:5000/api/stories");
         const data = await res.json();
+
+        console.log("STORIES RESPONSE:", data);
         setStories(data);
       } catch (err) {
         console.error("Failed to fetch stories", err);
@@ -62,8 +64,8 @@ export default function ReadingPage() {
     const fetchQuestions = async () => {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/questions?storyId=${selectedStory.id}&difficulty=${difficulty}`
-        );
+        `http://localhost:5000/api/questions?activity=reading&storyId=${selectedStory.id}&difficulty=${difficulty}`
+      );
         const data = await res.json();
         setQuestions(data);
       } catch (err) {
@@ -150,7 +152,7 @@ export default function ReadingPage() {
               Choose difficulty for {selectedStory.title}
             </h1>
 
-            {(["easy", "medium", "hard"] as const).map((lvl) => (
+            {(["easy", "average", "hard"] as const).map((lvl) => (
               <button
                 key={lvl}
                 onClick={() => {

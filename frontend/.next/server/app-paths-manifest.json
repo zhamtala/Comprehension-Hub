@@ -1,11 +1,7 @@
 {
-  "/login/page": "app/login/page.js",
-  "/select/page": "app/select/page.js",
-  "/dashboards/StudentDashboard/page": "app/dashboards/StudentDashboard/page.js",
-  "/reading/page": "app/reading/page.js",
-  "/listening/page": "app/listening/page.js",
-  "/dictionary/page": "app/dictionary/page.js",
   "/page": "app/page.js",
-  "/admin/page": "app/admin/page.js",
-  "/admin/create/page": "app/admin/create/page.js"
+  "/login/page": "app/login/page.js",
+  "/dashboards/StudentDashboard/page": "app/dashboards/StudentDashboard/page.js",
+  "/listening/page": "app/listening/page.js",
+  "/dashboards/Achievements/page": "app/dashboards/Achievements/page.js"
 }

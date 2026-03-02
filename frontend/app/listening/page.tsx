@@ -2,94 +2,124 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Volume2, Brain, Sparkles } from "lucide-react";
+import { Volume2 } from "lucide-react";
 import Confetti from "react-confetti";
 
+
 interface ListeningQuestion {
-  _id: string;
-  storyTitle: string;
-  storyText: string;
+  id: number;
   question: string;
   options: string[];
-  correctAnswer: string;
-  difficulty: "easy" | "medium" | "hard";
+  answer: string;
+  storyTitle: string;
+  storyText: string;
+  difficulty: "easy" | "average" | "hard";
+}
+
+interface StoryGroup {
+  title: string;
+  story: string;
+  questions: {
+    q: string;
+    a: string[];
+    correct: string;
+  }[];
 }
 
 export default function ListeningPage() {
-  const [stories, setStories] = useState<any[]>([]);
-  const [story, setStory] = useState("");
-  const [questions, setQuestions] = useState<any[]>([]);
+  const [stories, setStories] = useState<StoryGroup[]>([]);
+  const [selectedStory, setSelectedStory] = useState<StoryGroup | null>(null);
+  const [questions, setQuestions] = useState<StoryGroup["questions"]>([]);
   const [userAnswers, setUserAnswers] = useState<{ [key: number]: string }>({});
   const [isPlaying, setIsPlaying] = useState(false);
-  const [title, setTitle] = useState("");
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [difficulty, setDifficulty] = useState<"easy" | "average" | "hard" | null>(null);
+
   const resultBoxRef = useRef<HTMLDivElement>(null);
-  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard" | null>(null);
 
-  // ✅ Fetch listening questions from backend
-  useEffect(() => {
-    fetch("http://localhost:5000/api/questions?activityType=listening")
-      .then((res) => res.json())
-      .then((data) => {
-        // Group by storyTitle
-        const grouped = Object.values(
-          data.reduce((acc: any, item: ListeningQuestion) => {
-            if (!acc[item.storyTitle]) {
-              acc[item.storyTitle] = {
-                title: item.storyTitle,
-                story: item.storyText,
-                questions: [],
-              };
-            }
-
-            acc[item.storyTitle].questions.push({
-              q: item.question,
-              a: item.options,
-              correct: item.correctAnswer,
-              difficulty: item.difficulty,
-            });
-
-            return acc;
-          }, {})
-        );
-
-        setStories(grouped);
-      })
-      .catch((err) => console.error("Failed to fetch listening:", err));
-  }, []);
-
-  // ✅ Generate random story from DB
-  const generateStory = () => {
-    if (stories.length === 0) return;
-
-    const random = stories[Math.floor(Math.random() * stories.length)];
-
-    setStory(random.story);
-    setQuestions(random.questions);
-    setTitle(random.title);
-    setUserAnswers({});
-    setShowResult(false);
-    setDifficulty(null);
-  };
-
-  const playAudio = async () => {
-    if (!story) return;
+  // ✅ Fetch listening questions based on selected difficulty
+  const fetchListeningQuestions = async (selectedDifficulty: string) => {
     try {
-      setIsPlaying(true);
-      const response = await fetch(`/api/tts?text=${encodeURIComponent(story)}`);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.onended = () => setIsPlaying(false);
-      await audio.play();
-    } catch {
-      setIsPlaying(false);
+      const res = await fetch(
+        `http://localhost:5000/api/questions?activity=listening&difficulty=${selectedDifficulty}`
+      );
+
+      const data: ListeningQuestion[] = await res.json();
+
+      if (!Array.isArray(data)) {
+        console.error("Unexpected listening response:", data);
+        return;
+      }
+
+      // Group by storyTitle
+      const grouped: StoryGroup[] = Object.values(
+        data.reduce((acc: any, item: ListeningQuestion) => {
+          if (!acc[item.storyTitle]) {
+            acc[item.storyTitle] = {
+              title: item.storyTitle,
+              story: item.storyText || "",
+              questions: [],
+            };
+          }
+
+          acc[item.storyTitle].questions.push({
+            q: item.question,
+            a: item.options,
+            correct: item.answer,
+          });
+
+          return acc;
+        }, {})
+      );
+
+      setStories(grouped);
+
+      if (grouped.length > 0) {
+        setSelectedStory(grouped[0]);
+        setQuestions(grouped[0].questions);
+        setUserAnswers({});
+        setShowResult(false);
+      }
+    } catch (err) {
+      console.error("Failed to fetch listening:", err);
     }
   };
 
+  const selectDifficulty = (level: "easy" | "average" | "hard") => {
+    setDifficulty(level);
+    fetchListeningQuestions(level);
+  };
+
+  const playAudio = () => {
+    if (!selectedStory?.story) return;
+
+    // Stop anything already playing
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(selectedStory.story);
+    utterance.lang = "en-US";
+    utterance.rate = 0.9;
+
+    utterance.onstart = () => setIsPlaying(true);
+
+    utterance.onend = () => {
+      setIsPlaying(false);
+      window.speechSynthesis.cancel();
+    };
+
+    utterance.onerror = () => {
+      setIsPlaying(false);
+      window.speechSynthesis.cancel();
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
   const checkAnswers = () => {
+    if (!questions) return;
+
     let correctCount = 0;
 
     questions.forEach((q, i) => {
@@ -108,7 +138,7 @@ export default function ListeningPage() {
   };
 
   const submitListening = async (finalScore: number) => {
-    if (!difficulty) return;
+    if (!difficulty || !questions) return;
 
     const activityData = {
       activityType: "listening",
@@ -129,58 +159,63 @@ export default function ListeningPage() {
         body: JSON.stringify(activityData),
       });
 
-      console.log("Listening saved");
+      console.log("Listening activity saved");
     } catch (err) {
       console.error("Listening save failed:", err);
     }
   };
 
+  // ✅ Generate a random story from the fetched stories
+  const generateRandomStory = () => {
+    if (!stories || stories.length === 0) return;
+    const random = stories[Math.floor(Math.random() * stories.length)];
+    setSelectedStory(random);
+    setQuestions(random.questions);
+    setUserAnswers({});
+    setShowResult(false);
+  };
+
+    useEffect(() => {
+    const stopSpeech = () => {
+      window.speechSynthesis.cancel();
+    };
+
+    // Stop when leaving page
+    window.addEventListener("beforeunload", stopSpeech);
+    window.addEventListener("popstate", stopSpeech);
+
+    return () => {
+      stopSpeech();
+      window.removeEventListener("beforeunload", stopSpeech);
+      window.removeEventListener("popstate", stopSpeech);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-black via-slate-900 to-black text-white px-4 pb-20">
       
-      {/* Keep your UI EXACTLY the same below this line */}
-
       {/* Back Button */}
       <a
         href="/dashboards/StudentDashboard"
+        onClick={() => window.speechSynthesis.cancel()}
         className="fixed top-3 left-3 z-40 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-full text-cyan-200 text-sm"
       >
         ← Back
       </a>
 
-      {/* HEADER */}
+      {/* Header */}
       <div className="text-center mb-6 mt-10">
         <h1 className="text-3xl font-bold">🎧 Listening Challenge</h1>
         <p className="text-cyan-200/70">Listen carefully and answer</p>
       </div>
 
-      {/* Buttons */}
-      <div className="flex gap-4 mb-6">
-        <button
-          onClick={generateStory}
-          className="px-6 py-2 rounded-full bg-cyan-500"
-        >
-          Generate Story
-        </button>
-
-        {story && (
-          <button
-            onClick={playAudio}
-            disabled={isPlaying}
-            className="px-6 py-2 rounded-full bg-emerald-500"
-          >
-            {isPlaying ? "Playing..." : "Listen"}
-          </button>
-        )}
-      </div>
-
-      {/* Difficulty */}
-      {story && !difficulty && (
+      {/* Difficulty Selection */}
+      {!difficulty && (
         <div className="flex gap-4 mb-6">
-          {["easy", "medium", "hard"].map((level) => (
+          {["easy", "average", "hard"].map((level) => (
             <button
               key={level}
-              onClick={() => setDifficulty(level as any)}
+              onClick={() => selectDifficulty(level as any)}
               className="px-5 py-2 rounded-full bg-fuchsia-500 capitalize"
             >
               {level}
@@ -189,8 +224,39 @@ export default function ListeningPage() {
         </div>
       )}
 
+      {/* Generate Random Story */}
+      {difficulty && stories.length > 0 && !selectedStory && (
+        <button
+          onClick={generateRandomStory}
+          className="px-6 py-2 rounded-full bg-cyan-500 mb-6"
+        >
+          Generate Story
+        </button>
+      )}
+
+      {/* STORY SECTION */}
+      {selectedStory && (
+        <>
+          {/* Title FIRST */}
+          <div className="text-center mb-4">
+            <h2 className="text-2xl font-bold text-cyan-300">
+              {selectedStory.title}
+            </h2>
+          </div>
+
+          {/* Listen Button SECOND */}
+          <button
+            onClick={playAudio}
+            disabled={isPlaying}
+            className="px-6 py-2 rounded-full bg-emerald-500 mb-8"
+          >
+            {isPlaying ? "Playing..." : "🎧 Listen"}
+          </button>
+        </>
+      )}
+
       {/* Questions */}
-      {difficulty && questions.length > 0 && !showResult && (
+      {selectedStory && questions.length > 0 && !showResult && (
         <div className="space-y-6 max-w-3xl w-full">
           {questions.map((q, i) => (
             <div key={i} className="p-4 bg-white/10 rounded-xl">
@@ -245,7 +311,7 @@ export default function ListeningPage() {
               </p>
 
               <button
-                onClick={generateStory}
+                onClick={generateRandomStory}
                 className="px-6 py-2 bg-cyan-500 text-white rounded-full"
               >
                 Try Another Story

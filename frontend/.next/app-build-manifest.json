@@ -26,30 +26,20 @@
       "static/chunks/main-app.js",
       "static/chunks/app/dashboards/StudentDashboard/page.js"
     ],
-    "/reading/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/reading/page.js"
-    ],
     "/listening/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/listening/page.js"
     ],
-    "/dictionary/page": [
+    "/api/tts/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dictionary/page.js"
+      "static/chunks/app/api/tts/route.js"
     ],
-    "/admin/page": [
+    "/dashboards/Achievements/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/page.js"
-    ],
-    "/admin/create/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/create/page.js"
+      "static/chunks/app/dashboards/Achievements/page.js"
     ]
   }
 }

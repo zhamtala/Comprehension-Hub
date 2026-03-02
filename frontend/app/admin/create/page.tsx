@@ -49,7 +49,7 @@ export default function CreateQuestionPage() {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `http://localhost:5000/api/admin/stories?activity=${form.activity}&difficulty=${form.difficulty}`,
+        `http://localhost:5000/api/admin/stories`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -65,10 +65,8 @@ export default function CreateQuestionPage() {
   };
 
   useEffect(() => {
-    if (showPassage) {
       fetchStories();
-    }
-  }, [form.activity, form.difficulty]);
+  }, []);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
