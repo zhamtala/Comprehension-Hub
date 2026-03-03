@@ -14,10 +14,40 @@ import storyRoutes from "./routes/storyRoutes.js";
 import db from "./db.js";
 
 const app = express();
-app.use(cors());
+
+/* =============================
+   CORS Configuration
+   ============================= */
+const allowedOrigins = [
+  "http://localhost:3000", // local frontend
+  process.env.FRONTEND_URL, // production frontend (Vercel)
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // allow non-browser requests
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("CORS not allowed"));
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
-// Routes
+/* =============================
+   Health Check Route (IMPORTANT for Render)
+   ============================= */
+app.get("/", (req, res) => {
+  res.json({ message: "Backend is running 🚀" });
+});
+
+/* =============================
+   API Routes
+   ============================= */
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/activities", activityRoutes);
@@ -26,19 +56,21 @@ app.use("/api/questions", questionRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/stories", storyRoutes);
 
+/* =============================
+   Start Server After DB Check
+   ============================= */
 const PORT = process.env.PORT || 5000;
 
-// Test DB connection before starting
 async function startServer() {
   try {
-    await db.query("SELECT 1"); // test connection
-    console.log("Database connected!");
+    await db.query("SELECT 1");
+    console.log("✅ Database connected successfully");
 
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      console.log(`🚀 Server running on port ${PORT}`);
     });
   } catch (err) {
-    console.error("Database connection failed:", err);
+    console.error("❌ Database connection failed:", err.message);
     process.exit(1);
   }
 }
