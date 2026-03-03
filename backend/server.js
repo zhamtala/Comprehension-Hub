@@ -18,18 +18,23 @@ const app = express();
 /* =============================
    CORS Configuration
    ============================= */
+
 const allowedOrigins = [
-  "http://localhost:3000", // local frontend
+  "http://localhost:3000", // local development
   process.env.FRONTEND_URL, // production frontend (Vercel)
-];
+].filter(Boolean); // removes undefined values
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // allow non-browser requests
+    origin: (origin, callback) => {
+      // Allow server-to-server or Postman requests
+      if (!origin) return callback(null, true);
+
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
+
+      console.log("❌ Blocked by CORS:", origin);
       return callback(new Error("CORS not allowed"));
     },
     credentials: true,
