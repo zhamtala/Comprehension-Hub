@@ -61,7 +61,7 @@ export default function GrammarQuiz() {
         }
 
         const res = await fetch(
-          "${process.env.NEXT_PUBLIC_API_URL}/api/questions?activity=grammar&difficulty=standard",
+          `${process.env.NEXT_PUBLIC_API_URL}/api/questions?activity=grammar&difficulty=standard`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -158,7 +158,7 @@ export default function GrammarQuiz() {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/activities/submit", {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activities/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

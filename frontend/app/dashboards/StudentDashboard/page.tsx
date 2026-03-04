@@ -54,7 +54,7 @@ export default function StudentDashboard() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch("${process.env.NEXT_PUBLIC_API_URL}/api/progress/breakdown", {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/progress/breakdown`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
