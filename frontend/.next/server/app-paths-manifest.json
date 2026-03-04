@@ -1,1 +1,23 @@
-{}
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/tts/route": "app/api/tts/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/admin/create/page": "app/admin/create/page.js",
+  "/admin/edit/[id]/page": "app/admin/edit/[id]/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/comprehension/play/page": "app/comprehension/play/page.js",
+  "/admin/questions/page": "app/admin/questions/page.js",
+  "/admin/upload/page": "app/admin/upload/page.js",
+  "/dashboards/Achievements/page": "app/dashboards/Achievements/page.js",
+  "/dictionary/page": "app/dictionary/page.js",
+  "/grammar/page": "app/grammar/page.js",
+  "/listening/page": "app/listening/page.js",
+  "/dashboards/StudentDashboard/page": "app/dashboards/StudentDashboard/page.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
+  "/passwords/reset-password/page": "app/passwords/reset-password/page.js",
+  "/register/page": "app/register/page.js",
+  "/passwords/forgot-password/page": "app/passwords/forgot-password/page.js",
+  "/reading/page": "app/reading/page.js",
+  "/select/page": "app/select/page.js"
+}

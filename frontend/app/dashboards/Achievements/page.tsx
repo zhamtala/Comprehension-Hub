@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Award } from "lucide-react";
 import { useEffect, useState } from "react";
-import SkillBreakdownChart from "@/components/SkillBreakdownChart";
+import SkillBreakdownChart from "@/app/components/SkillBreakdownChart";
 
 /* ================= TYPES ================= */
 
