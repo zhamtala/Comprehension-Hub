@@ -44,7 +44,7 @@ export default function ReadingPage() {
   useEffect(() => {
     const fetchStories = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/stories");
+        const res = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/stories");
         const data = await res.json();
 
         console.log("STORIES RESPONSE:", data);
@@ -64,7 +64,7 @@ export default function ReadingPage() {
     const fetchQuestions = async () => {
       try {
         const res = await fetch(
-        `http://localhost:5000/api/questions?activity=reading&storyId=${selectedStory.id}&difficulty=${difficulty}`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/questions?activity=reading&storyId=${selectedStory.id}&difficulty=${difficulty}`
       );
         const data = await res.json();
         setQuestions(data);

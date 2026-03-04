@@ -29,7 +29,7 @@ export default function AdminUploadPage() {
       const parsed = JSON.parse(jsonInput);
 
       const res = await fetch(
-        "http://localhost:5000/api/admin/validate-questions",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/validate-questions`,
         {
           method: "POST",
           headers: {
@@ -74,7 +74,7 @@ export default function AdminUploadPage() {
       const parsed = JSON.parse(jsonInput);
 
       const res = await fetch(
-        "http://localhost:5000/api/admin/upload-questions",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/upload-questions`,
         {
           method: "POST",
           headers: {

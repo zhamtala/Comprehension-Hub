@@ -43,7 +43,7 @@ export default function ListeningPage() {
   const fetchListeningQuestions = async (selectedDifficulty: string) => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/questions?activity=listening&difficulty=${selectedDifficulty}`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/questions?activity=listening&difficulty=${selectedDifficulty}`
       );
 
       const data: ListeningQuestion[] = await res.json();
@@ -150,7 +150,7 @@ export default function ListeningPage() {
     try {
       const token = localStorage.getItem("token");
 
-      await fetch("http://localhost:5000/api/activities/submit", {
+      await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/activities/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

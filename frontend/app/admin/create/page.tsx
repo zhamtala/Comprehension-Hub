@@ -49,7 +49,7 @@ export default function CreateQuestionPage() {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `http://localhost:5000/api/admin/stories`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/stories`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -91,7 +91,7 @@ export default function CreateQuestionPage() {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        "http://localhost:5000/api/admin/questions",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/questions`,
         {
           method: "POST",
           headers: {

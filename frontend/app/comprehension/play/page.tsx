@@ -37,7 +37,7 @@ export default function ComprehensionPage() {
   const generateStory = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/admin/comprehension?difficulty=${difficulty}`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/comprehension?difficulty=${difficulty}`
       );
 
       const data = await res.json();
@@ -123,7 +123,7 @@ export default function ComprehensionPage() {
     try {
       const token = localStorage.getItem("token");
 
-      await fetch("http://localhost:5000/api/activities/submit", {
+      await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/activities/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

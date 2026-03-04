@@ -42,7 +42,7 @@ export default function EditQuestionPage() {
         const token = localStorage.getItem("token");
 
         const res = await fetch(
-            `http://localhost:5000/api/admin/questions/${id}`,
+            `${process.env.NEXT_PUBLIC_API_URL}/api/admin/questions/${id}`,
             {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -117,7 +117,7 @@ export default function EditQuestionPage() {
     try {
         
       const res = await fetch(
-        `http://localhost:5000/api/questions/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/questions/${id}`,
         {
           method: "PUT",
           headers: {

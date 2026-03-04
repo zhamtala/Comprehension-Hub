@@ -34,7 +34,7 @@ export default function StudentDashboard() {
       return;
     }
 
-    fetch("http://localhost:5000/api/users", {
+    fetch("${process.env.NEXT_PUBLIC_API_URL}/api/users", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
@@ -54,7 +54,7 @@ export default function StudentDashboard() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch("http://localhost:5000/api/progress/breakdown", {
+    fetch("${process.env.NEXT_PUBLIC_API_URL}/api/progress/breakdown", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())

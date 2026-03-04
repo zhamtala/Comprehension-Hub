@@ -30,7 +30,7 @@ export default function ManageQuestionsPage() {
       }
 
       const res = await fetch(
-        "http://localhost:5000/api/admin/questions",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/questions`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -70,7 +70,7 @@ export default function ManageQuestionsPage() {
       }
 
       const res = await fetch(
-        `http://localhost:5000/api/admin/questions/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/questions/${id}`,
         {
           method: "DELETE",
           headers: {

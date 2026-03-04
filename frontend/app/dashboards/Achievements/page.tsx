@@ -32,7 +32,7 @@ export default function AchievementsPage() {
   useEffect(() => {
     const loadBreakdown = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/progress/breakdown", {
+        const res = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/progress/breakdown", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
