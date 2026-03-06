@@ -15,7 +15,7 @@ interface Question {
 interface Story {
   id: number;
   title: string;
-  content: string;
+  passage: string;
 }
 
 export default function ReadingPage() {
@@ -180,7 +180,7 @@ export default function ReadingPage() {
             </h1>
 
             <p className="text-lg whitespace-pre-line mb-6">
-              {selectedStory.content}
+              {selectedStory.passage}
             </p>
 
             <button
