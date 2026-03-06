@@ -21,7 +21,7 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:3000", // local dev
-  "https://comprehension-hub-h2lb-j683jnxh7-zhamtalas-projects.vercel.app", // your Vercel frontend
+  "https://comprehension-hub-h2lb.vercel.app", // your Vercel frontend
 ].filter(Boolean);
 
 app.use(
