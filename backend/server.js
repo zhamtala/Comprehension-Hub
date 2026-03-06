@@ -20,14 +20,14 @@ const app = express();
    ============================= */
 
 const allowedOrigins = [
-  "http://localhost:3000", // local development
-  process.env.FRONTEND_URL, // production frontend (Vercel)
-].filter(Boolean); // removes undefined values
+  "http://localhost:3000", // local dev
+  "https://comprehension-hub-h2lb-j683jnxh7-zhamtalas-projects.vercel.app", // your Vercel frontend
+].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow server-to-server or Postman requests
+      // Allow server-to-server, Postman, or frontend requests
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
@@ -37,6 +37,7 @@ app.use(
       console.log("❌ Blocked by CORS:", origin);
       return callback(new Error("CORS not allowed"));
     },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );

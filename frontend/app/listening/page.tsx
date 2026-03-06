@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Volume2 } from "lucide-react";
 import Confetti from "react-confetti";
+import { speakText, stopSpeaking, pauseSpeaking, resumeSpeaking } from "@/lib/speech";
 
 
 interface ListeningQuestion {
@@ -32,6 +33,7 @@ export default function ListeningPage() {
   const [questions, setQuestions] = useState<StoryGroup["questions"]>([]);
   const [userAnswers, setUserAnswers] = useState<{ [key: number]: string }>({});
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -92,29 +94,36 @@ export default function ListeningPage() {
     fetchListeningQuestions(level);
   };
 
-  const playAudio = () => {
+  const playAudio = async () => {
     if (!selectedStory?.story) return;
 
-    // Stop anything already playing
-    window.speechSynthesis.cancel();
+    setIsPlaying(true);
+    setIsPaused(false);
 
-    const utterance = new SpeechSynthesisUtterance(selectedStory.story);
-    utterance.lang = "en-US";
-    utterance.rate = 0.9;
+    await speakText(selectedStory.story);
 
-    utterance.onstart = () => setIsPlaying(true);
+    const checkSpeaking = setInterval(() => {
+      if (!window.speechSynthesis.speaking) {
+        setIsPlaying(false);
+        setIsPaused(false);
+        clearInterval(checkSpeaking);
+      }
+    }, 300);
+  };
 
-    utterance.onend = () => {
-      setIsPlaying(false);
-      window.speechSynthesis.cancel();
-    };
+  const pauseAudio = () => {
+    pauseSpeaking();
+    setIsPaused(true);
+  };
 
-    utterance.onerror = () => {
-      setIsPlaying(false);
-      window.speechSynthesis.cancel();
-    };
+  const resumeAudio = () => {
+    resumeSpeaking();
+    setIsPaused(false);
+  };
 
-    window.speechSynthesis.speak(utterance);
+  const replayAudio = () => {
+    stopSpeaking();
+    playAudio();
   };
 
   const checkAnswers = () => {
@@ -176,8 +185,12 @@ export default function ListeningPage() {
   };
 
     useEffect(() => {
+    speechSynthesis.getVoices();
+  }, []);
+
+    useEffect(() => {
     const stopSpeech = () => {
-      window.speechSynthesis.cancel();
+      stopSpeaking();
     };
 
     // Stop when leaving page
@@ -197,7 +210,7 @@ export default function ListeningPage() {
       {/* Back Button */}
       <a
         href="/dashboards/StudentDashboard"
-        onClick={() => window.speechSynthesis.cancel()}
+        onClick={() => stopSpeaking()}
         className="fixed top-3 left-3 z-40 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-full text-cyan-200 text-sm"
       >
         ← Back
@@ -244,14 +257,45 @@ export default function ListeningPage() {
             </h2>
           </div>
 
-          {/* Listen Button SECOND */}
+          <div className="flex gap-3 mt-4">
+
+          {/* PLAY */}
           <button
             onClick={playAudio}
-            disabled={isPlaying}
-            className="px-6 py-2 rounded-full bg-emerald-500 mb-8"
+            className="px-4 py-2 bg-green-600 rounded-lg text-white"
           >
-            {isPlaying ? "Playing..." : "🎧 Listen"}
+            ▶ Play
           </button>
+
+          {/* PAUSE */}
+          {isPlaying && !isPaused && (
+            <button
+              onClick={pauseAudio}
+              className="px-4 py-2 bg-yellow-500 rounded-lg text-white"
+            >
+              ⏸ Pause
+            </button>
+          )}
+
+          {/* RESUME */}
+          {isPaused && (
+            <button
+              onClick={resumeAudio}
+              className="px-4 py-2 bg-blue-500 rounded-lg text-white"
+            >
+              ▶ Resume
+            </button>
+          )}
+
+          {/* REPLAY */}
+          <button
+            onClick={replayAudio}
+            className="px-4 py-2 bg-purple-600 rounded-lg text-white"
+          >
+            🔁 Replay
+          </button>
+
+        </div>
         </>
       )}
 

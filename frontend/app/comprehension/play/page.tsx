@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Volume2, Brain, Sparkles } from "lucide-react";
 import Confetti from "react-confetti";
 import { useRouter } from "next/navigation";
+import { speakText, stopSpeaking } from "@/lib/speech";
 
 type Difficulty = "easy" | "average" | "hard";
 
@@ -58,29 +59,36 @@ export default function ComprehensionPage() {
     }
   };
 
-  // 🔥 Auto load when difficulty changes
+  //  Auto load when difficulty changes
   useEffect(() => {
     generateStory();
   }, [difficulty]);
 
-  const playAudio = async () => {
+  //  Stop speech when navigating away or on unmount
+  useEffect(() => {
+    return () => {
+      stopSpeaking();
+    };
+  }, []);
+
+  // load voices to prevent delay on first play
+  useEffect(() => {
+    speechSynthesis.getVoices();
+  }, []);
+
+  const playAudio = () => {
     if (!story) return;
-    try {
-      setIsPlaying(true);
-      const response = await fetch(
-        `/api/tts?text=${encodeURIComponent(story)}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch audio");
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.onended = () => setIsPlaying(false);
-      audio.onerror = () => setIsPlaying(false);
-      document.body.appendChild(audio);
-      await audio.play();
-    } catch {
-      setIsPlaying(false);
-    }
+
+    setIsPlaying(true);
+
+    speakText(story);
+
+    const checkSpeech = setInterval(() => {
+      if (!window.speechSynthesis.speaking) {
+        setIsPlaying(false);
+        clearInterval(checkSpeech);
+      }
+    }, 200);
   };
 
   const checkAnswers = async () => {
