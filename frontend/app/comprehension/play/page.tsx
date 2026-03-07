@@ -23,6 +23,8 @@ export default function ComprehensionPage() {
   const [score, setScore] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
   const [screenSize, setScreenSize] = useState({ width: 400, height: 800 });
+  const [stories, setStories] = useState<{ id: number; title: string }[]>([]);
+  const [selectedStoryId, setSelectedStoryId] = useState<number | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -34,11 +36,33 @@ export default function ComprehensionPage() {
     }
   }, []);
 
-  // 🔥 Fetch story + questions from backend
+  useEffect(() => {
+    const fetchStories = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/stories`
+        );
+
+        const data = await res.json();
+
+        setStories(data);
+
+        if (data.length > 0) {
+          setSelectedStoryId(data[0].id);
+        }
+
+      } catch (err) {
+        console.error("Failed to load stories", err);
+      }
+    };
+
+    fetchStories();
+  }, []);
+
   const generateStory = async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/comprehension?difficulty=${difficulty}`
+      `${process.env.NEXT_PUBLIC_API_URL}/api/admin/comprehension?storyId=${selectedStoryId}&difficulty=${difficulty}`
       );
 
       const data = await res.json();
@@ -61,8 +85,10 @@ export default function ComprehensionPage() {
 
   //  Auto load when difficulty changes
   useEffect(() => {
-    generateStory();
-  }, [difficulty]);
+    if (selectedStoryId) {
+      generateStory();
+    }
+  }, [difficulty, selectedStoryId]);
 
   //  Stop speech when navigating away or on unmount
   useEffect(() => {
@@ -79,16 +105,29 @@ export default function ComprehensionPage() {
   const playAudio = () => {
     if (!story) return;
 
+    stopSpeaking();
+
+    const utterance = new SpeechSynthesisUtterance(story);
+
+    utterance.onstart = () => setIsPlaying(true);
+    utterance.onend = () => setIsPlaying(false);
+
+    speechSynthesis.speak(utterance);
+  };
+
+  const pauseAudio = () => {
+    speechSynthesis.pause();
+    setIsPlaying(false);
+  };
+
+  const resumeAudio = () => {
+    speechSynthesis.resume();
     setIsPlaying(true);
+  };
 
-    speakText(story);
-
-    const checkSpeech = setInterval(() => {
-      if (!window.speechSynthesis.speaking) {
-        setIsPlaying(false);
-        clearInterval(checkSpeech);
-      }
-    }, 200);
+  const replayAudio = () => {
+    stopSpeaking();
+    playAudio();
   };
 
   const checkAnswers = async () => {
@@ -210,6 +249,7 @@ export default function ComprehensionPage() {
             whileTap={{ scale: isDifficultyUnlocked(level) ? 0.95 : 1 }}
             onClick={() => {
               if (isDifficultyUnlocked(level)) {
+                stopSpeaking();
                 setDifficulty(level);
               }
             }}
@@ -226,6 +266,23 @@ export default function ComprehensionPage() {
         ))}
       </div>
 
+      <div className="z-10 mb-6 w-full max-w-md">
+        <select
+          value={selectedStoryId || ""}
+          onChange={(e) => {
+            setSelectedStoryId(Number(e.target.value));
+            stopSpeaking();
+          }}
+          className="w-full px-4 py-2 rounded-xl bg-white/10 border border-cyan-400/20 text-white"
+        >
+          {stories.map((story) => (
+            <option key={story.id} value={story.id}>
+              {story.title}
+            </option>
+          ))}
+        </select>
+      </div>    
+      
       {story && (
         <motion.div className="z-10 bg-white/10 border border-cyan-400/20 rounded-3xl p-4 sm:p-6 md:p-8 text-center max-w-full md:max-w-3xl mx-auto mb-8 backdrop-blur-md shadow-2xl w-full">
           <h2
@@ -255,19 +312,39 @@ export default function ComprehensionPage() {
                 </p>
               )}
 
-              <motion.button
+              <div className="flex justify-center gap-3 mt-3 flex-wrap">
+                <motion.button
                 whileHover={{ scale: 1.05 }}
                 onClick={playAudio}
-                disabled={isPlaying}
-                className={`flex items-center justify-center gap-2 mx-auto mt-2 px-5 md:px-6 py-2 rounded-full font-medium transition-all text-sm md:text-base ${
-                  isPlaying
-                    ? "bg-gray-600 cursor-not-allowed"
-                    : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90"
-                }`}
-              >
-                <Volume2 className="w-5 h-5" />{" "}
-                {isPlaying ? "Playing..." : "Listen to Story"}
-              </motion.button>
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+                >
+                ▶ Play
+                </motion.button>
+
+                <motion.button
+                whileHover={{ scale: 1.05 }}
+                onClick={pauseAudio}
+                className="px-4 py-2 rounded-full bg-yellow-500"
+                >
+                ⏸ Pause
+                </motion.button>
+
+                <motion.button
+                whileHover={{ scale: 1.05 }}
+                onClick={resumeAudio}
+                className="px-4 py-2 rounded-full bg-blue-500"
+                >
+                ▶ Resume
+                </motion.button>
+
+                <motion.button
+                whileHover={{ scale: 1.05 }}
+                onClick={replayAudio}
+                className="px-4 py-2 rounded-full bg-purple-500"
+                >
+                ↺ Replay
+                </motion.button>
+              </div>
             </>
           )}
         </motion.div>
