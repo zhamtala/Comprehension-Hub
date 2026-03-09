@@ -273,7 +273,7 @@ export default function ComprehensionPage() {
             setSelectedStoryId(Number(e.target.value));
             stopSpeaking();
           }}
-          className="w-full px-4 py-2 rounded-xl bg-white/10 border border-cyan-400/20 text-white"
+          className="w-full px-4 py-2 rounded-xl bg-white text-black border border-cyan-400/30 shadow-md"
         >
           {stories.map((story) => (
             <option key={story.id} value={story.id}>

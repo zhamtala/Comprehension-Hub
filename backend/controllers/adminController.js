@@ -405,7 +405,7 @@ export const uploadQuestions = async (req, res) => {
   };
 
   export const getComprehensionContent = async (req, res) => {
-    const { difficulty } = req.query;
+    const { difficulty, storyId } = req.query;
 
     try {
       const [rows] = await db.query(
@@ -414,28 +414,20 @@ export const uploadQuestions = async (req, res) => {
         LEFT JOIN stories s ON q.story_id = s.id
         LEFT JOIN question_options o ON q.id = o.question_id
         WHERE q.activity = 'comprehension'
-        AND q.difficulty = ?`,
-        [difficulty]
+        AND q.difficulty = ?
+        AND q.story_id = ?`,
+        [difficulty, storyId]
       );
 
       if (rows.length === 0) {
         return res.json({ title: null, story: null, questions: [] });
       }
 
-      // 🔥 Group by story
-      const groupedByStory = {};
-      rows.forEach(row => {
-        const storyId = row.story_id || "no_story";
-        if (!groupedByStory[storyId]) groupedByStory[storyId] = [];
-        groupedByStory[storyId].push(row);
-      });
-
-      const storyIds = Object.keys(groupedByStory);
-      const randomStoryId = storyIds[Math.floor(Math.random() * storyIds.length)];
-      const selectedRows = groupedByStory[randomStoryId];
+      const selectedRows = rows;
 
       // 🔥 Group by question
       const questionsMap = {};
+      
       selectedRows.forEach(row => {
         if (!questionsMap[row.id]) {
           questionsMap[row.id] = {
