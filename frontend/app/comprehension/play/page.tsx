@@ -85,9 +85,8 @@ export default function ComprehensionPage() {
 
   //  Auto load when difficulty changes
   useEffect(() => {
-    if (selectedStoryId) {
+    if (!selectedStoryId) return; 
       generateStory();
-    }
   }, [difficulty, selectedStoryId]);
 
   //  Stop speech when navigating away or on unmount
@@ -266,22 +265,47 @@ export default function ComprehensionPage() {
         ))}
       </div>
 
-      <div className="z-10 mb-6 w-full max-w-md">
-        <select
-          value={selectedStoryId || ""}
-          onChange={(e) => {
-            setSelectedStoryId(Number(e.target.value));
-            stopSpeaking();
-          }}
-          className="w-full px-4 py-2 rounded-xl bg-white text-black border border-cyan-400/30 shadow-md"
-        >
-          {stories.map((story) => (
-            <option key={story.id} value={story.id}>
-              {story.title}
-            </option>
-          ))}
-        </select>
-      </div>    
+      {difficulty === "easy" && !completedDifficulties.includes("easy") && (
+        <div className="z-10 w-full max-w-4xl mb-8">
+          
+          <h2 className="text-xl font-bold text-cyan-300 text-center mb-4">
+            Choose a Story
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+
+            {stories.map((storyItem) => (
+              <motion.div
+                key={storyItem.id}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  setSelectedStoryId(storyItem.id);
+                  stopSpeaking();
+                }}
+                className={`cursor-pointer p-5 rounded-2xl border backdrop-blur-md shadow-lg transition-all
+                
+                ${
+                  selectedStoryId === storyItem.id
+                    ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white border-transparent"
+                    : "bg-white/10 border-cyan-400/20 hover:bg-white/20"
+                }`}
+              >
+                <h3 className="font-semibold text-lg text-center">
+                  {storyItem.title}
+                </h3>
+
+                {selectedStoryId === storyItem.id && (
+                  <p className="text-sm text-center mt-2 text-white/80">
+                    Selected
+                  </p>
+                )}
+              </motion.div>
+            ))}
+
+          </div>
+        </div>
+      )}
       
       {story && (
         <motion.div className="z-10 bg-white/10 border border-cyan-400/20 rounded-3xl p-4 sm:p-6 md:p-8 text-center max-w-full md:max-w-3xl mx-auto mb-8 backdrop-blur-md shadow-2xl w-full">
@@ -447,6 +471,24 @@ export default function ComprehensionPage() {
                   className="bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white px-6 py-2 rounded-full font-semibold w-full mb-3"
                 >
                   Next Difficulty
+                </button>
+              )}
+
+              {difficulty === "hard" && (
+                <button
+                  onClick={() => {
+                    stopSpeaking();
+                    setDifficulty("easy");
+                    setCompletedDifficulties([]);
+                    setSelectedStoryId(null);
+                    setStory("");
+                    setQuestions([]);
+                    setUserAnswers({});
+                    setShowResult(false);
+                  }}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-full font-semibold w-full mb-3"
+                >
+                  Back to Story Selection
                 </button>
               )}
 
