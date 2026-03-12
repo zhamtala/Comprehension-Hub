@@ -1,37 +1,52 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Volume2, Brain, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { Brain, Sparkles } from "lucide-react";
 import Confetti from "react-confetti";
-import { useRouter } from "next/navigation";
 import { speakText, stopSpeaking } from "@/lib/speech";
 
 type Difficulty = "easy" | "average" | "hard";
+type Step = "stories" | "difficulty" | "activity";
 
 export default function ComprehensionPage() {
-  const router = useRouter();
+
+  const [step, setStep] = useState<Step>("stories");
 
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [completedDifficulties, setCompletedDifficulties] = useState<Difficulty[]>([]);
+
   const [story, setStory] = useState("");
-  const [questions, setQuestions] = useState<{ q: string; a: string[]; correct: string; type: string }[]>([]);
-  const [userAnswers, setUserAnswers] = useState<{ [key: number]: string }>({});
-  const [isPlaying, setIsPlaying] = useState(false);
   const [title, setTitle] = useState("");
+
+  const [questions, setQuestions] = useState<
+    { q: string; a: string[]; correct: string; type: string }[]
+  >([]);
+
+  const [userAnswers, setUserAnswers] = useState<{ [key: number]: string }>({});
+
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
+
   const [showConfetti, setShowConfetti] = useState(false);
   const [screenSize, setScreenSize] = useState({ width: 400, height: 800 });
-  const [stories, setStories] = useState<{ id: number; title: string }[]>([]);
+
+  const [stories, setStories] = useState<
+    { id: number; title: string; preview?: string }[]
+  >([]);
+
   const [selectedStoryId, setSelectedStoryId] = useState<number | null>(null);
+
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const updateSize = () =>
         setScreenSize({ width: window.innerWidth, height: window.innerHeight });
+
       updateSize();
       window.addEventListener("resize", updateSize);
+
       return () => window.removeEventListener("resize", updateSize);
     }
   }, []);
@@ -44,13 +59,7 @@ export default function ComprehensionPage() {
         );
 
         const data = await res.json();
-
         setStories(data);
-
-        if (data.length > 0) {
-          setSelectedStoryId(data[0].id);
-        }
-
       } catch (err) {
         console.error("Failed to load stories", err);
       }
@@ -62,129 +71,70 @@ export default function ComprehensionPage() {
   const generateStory = async () => {
     try {
       const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/admin/comprehension?storyId=${selectedStoryId}&difficulty=${difficulty}`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/comprehension?storyId=${selectedStoryId}&difficulty=${difficulty}`
       );
 
       const data = await res.json();
 
-      if (!data.story) {
-        setStory("");
-        setQuestions([]);
-        return;
-      }
+      if (!data.story) return;
 
       setStory(data.story);
       setTitle(data.title || "Comprehension Story");
       setQuestions(data.questions);
       setUserAnswers({});
       setShowResult(false);
+
     } catch (error) {
       console.error("Failed to fetch comprehension content", error);
     }
   };
 
-  //  Auto load when difficulty changes
   useEffect(() => {
-    if (!selectedStoryId) return; 
+    if (step === "activity" && selectedStoryId) {
       generateStory();
-  }, [difficulty, selectedStoryId]);
-
-  //  Stop speech when navigating away or on unmount
-  useEffect(() => {
-    return () => {
-      stopSpeaking();
-    };
-  }, []);
-
-  // load voices to prevent delay on first play
-  useEffect(() => {
-    speechSynthesis.getVoices();
-  }, []);
+    }
+  }, [difficulty, step]);
 
   const playAudio = () => {
-    if (!story) return;
-
     stopSpeaking();
-
-    const utterance = new SpeechSynthesisUtterance(story);
-
-    utterance.onstart = () => setIsPlaying(true);
-    utterance.onend = () => setIsPlaying(false);
-
-    speechSynthesis.speak(utterance);
-  };
-
-  const pauseAudio = () => {
-    speechSynthesis.pause();
-    setIsPlaying(false);
-  };
-
-  const resumeAudio = () => {
-    speechSynthesis.resume();
+    speakText(story);
     setIsPlaying(true);
   };
 
-  const replayAudio = () => {
-    stopSpeaking();
-    playAudio();
-  };
+  const checkAnswers = () => {
 
-  const checkAnswers = async () => {
     let correctCount = 0;
-   questions.forEach((q, i) => {
-    const studentAnswer = userAnswers[i]?.trim().toLowerCase() || "";
 
-    if (!q.correct) return; // skip if no correct answer stored
+    questions.forEach((q, i) => {
 
-    if (q.type === "mcq") {
-      if (studentAnswer === q.correct.trim().toLowerCase()) {
-        correctCount++;
+      const studentAnswer = userAnswers[i]?.trim().toLowerCase() || "";
+
+      if (!q.correct) return;
+
+      if (q.type === "mcq") {
+        if (studentAnswer === q.correct.trim().toLowerCase()) {
+          correctCount++;
+        }
       }
-    }
 
-    if (q.type === "short_answer") {
+      if (q.type === "short_answer") {
 
-    const studentAnswer =
-      (userAnswers[i] || "").toLowerCase();
+        const acceptableAnswers = q.correct
+          .toLowerCase()
+          .split("\n")
+          .map((a) => a.trim());
 
-    const acceptableAnswers =
-      (q.correct || "")
-        .toLowerCase()
-        .split("\n")
-        .map(a => a.trim())
-        .filter(a => a.length > 0);
+        const matched = acceptableAnswers.some((ans) =>
+          studentAnswer.includes(ans)
+        );
 
-    const matched = acceptableAnswers.some(keyword =>
-      studentAnswer.includes(keyword)
-    );
+        if (matched) correctCount++;
+      }
 
-    if (matched) correctCount++;
-}
-  });
+    });
 
-    console.log("Final Score:", correctCount);
     setScore(correctCount);
     setShowResult(true);
-
-    try {
-      const token = localStorage.getItem("token");
-
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/activities/submit`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          activityType: "comprehension",
-          difficulty,
-          score: correctCount,
-          total: questions.length,
-        }),
-      });
-    } catch (err) {
-      console.error("Failed to save comprehension progress", err);
-    }
 
     if (correctCount > 0) {
       setShowConfetti(true);
@@ -210,304 +160,248 @@ export default function ComprehensionPage() {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-black via-slate-900 to-black text-white px-4 pt-[env(safe-area-inset-top)] pb-20 relative overflow-hidden"
+      className="min-h-screen flex flex-col items-center bg-gradient-to-b from-black via-slate-900 to-black text-white px-4 pb-20"
     >
-      {showConfetti && typeof window !== "undefined" && (
-        <motion.div className="fixed inset-0 z-[9999] pointer-events-none">
-          <Confetti
-            width={screenSize.width}
-            height={screenSize.height}
-            numberOfPieces={350}
-            recycle={false}
-          />
-        </motion.div>
+
+      {showConfetti && (
+        <Confetti
+          width={screenSize.width}
+          height={screenSize.height}
+          numberOfPieces={350}
+          recycle={false}
+        />
       )}
 
-      <motion.div className="z-10 text-center mb-10 max-w-full flex flex-col items-center gap-2 px-2">
-        <h1
-          className="font-extrabold bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent flex items-center justify-center gap-2 text-center flex-wrap"
-          style={{ fontSize: "clamp(1.8rem, 6vw, 3rem)" }}
-        >
-          <Sparkles className="w-6 h-6 sm:w-7 sm:h-7" /> Comprehension Challenge
-        </h1>
-        <p
-          className="text-cyan-200/70 text-center"
-          style={{ fontSize: "clamp(0.875rem, 3vw, 1rem)" }}
-        >
-          Sharpen your reading and listening skills 🎧📖
-        </p>
-      </motion.div>
+      {/* HERO */}
+      <div className="text-center mt-10 mb-10">
 
-      <div className="z-10 flex justify-center mb-6 w-full max-w-xs sm:max-w-sm md:max-w-lg mx-auto gap-3 flex-wrap">
-        {(["easy", "average", "hard"] as Difficulty[]).map((level) => (
-          <motion.button
-            key={level}
-            whileHover={{ scale: isDifficultyUnlocked(level) ? 1.05 : 1 }}
-            whileTap={{ scale: isDifficultyUnlocked(level) ? 0.95 : 1 }}
-            onClick={() => {
-              if (isDifficultyUnlocked(level)) {
-                stopSpeaking();
-                setDifficulty(level);
-              }
-            }}
-            className={`flex-1 px-4 py-2 rounded-full text-sm md:text-base font-semibold uppercase tracking-wide text-center ${
-              difficulty === level
-                ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white shadow-lg"
-                : isDifficultyUnlocked(level)
-                ? "bg-white/10 text-gray-300 border border-cyan-400/20 hover:bg-white/20"
-                : "bg-gray-700/20 text-gray-500 border border-gray-600 cursor-not-allowed"
-            }`}
-          >
-            {level}
-          </motion.button>
-        ))}
+        <h1 className="text-4xl font-extrabold flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text text-transparent">
+          <Sparkles /> Comprehension Challenge
+        </h1>
+
+        <p className="text-cyan-200/70 mt-2">
+          Sharpen your reading and listening skills
+        </p>
+
       </div>
 
-      {difficulty === "easy" && !completedDifficulties.includes("easy") && (
-        <div className="z-10 w-full max-w-4xl mb-8">
-          
-          <h2 className="text-xl font-bold text-cyan-300 text-center mb-4">
-            Choose a Story
+      {/* STORY SELECTION */}
+      {step === "stories" && (
+
+        <div className="w-full max-w-6xl">
+
+          <h2 className="text-xl font-bold text-cyan-300 text-center mb-8">
+            📚 Choose a Story
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
 
             {stories.map((storyItem) => (
+
               <motion.div
                 key={storyItem.id}
                 whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setSelectedStoryId(storyItem.id);
-                  stopSpeaking();
-                }}
-                className={`cursor-pointer p-5 rounded-2xl border backdrop-blur-md shadow-lg transition-all
-                
-                ${
-                  selectedStoryId === storyItem.id
-                    ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white border-transparent"
-                    : "bg-white/10 border-cyan-400/20 hover:bg-white/20"
-                }`}
+                whileTap={{ scale: 0.96 }}
+                className="p-6 rounded-3xl bg-white/10 border border-cyan-400/20 backdrop-blur-md shadow-xl flex flex-col justify-between"
               >
-                <h3 className="font-semibold text-lg text-center">
-                  {storyItem.title}
-                </h3>
 
-                {selectedStoryId === storyItem.id && (
-                  <p className="text-sm text-center mt-2 text-white/80">
-                    Selected
+                <div>
+
+                  <div className="text-3xl text-center mb-3">
+                    📖
+                  </div>
+
+                  <h3 className="font-bold text-lg text-center text-cyan-200">
+                    {storyItem.title}
+                  </h3>
+
+                  <p className="text-sm text-center mt-3 text-gray-300">
+                    {storyItem.preview ||
+                      "Read the story and answer questions to test your understanding."}
                   </p>
-                )}
+
+                </div>
+
+                <button
+                  onClick={() => {
+                    setSelectedStoryId(storyItem.id);
+                    stopSpeaking();
+                    setStep("difficulty");
+                  }}
+                  className="mt-6 bg-gradient-to-r from-cyan-500 to-fuchsia-500 py-2 px-4 rounded-full text-sm font-semibold"
+                >
+                  Start Story →
+                </button>
+
               </motion.div>
+
             ))}
 
           </div>
+
         </div>
+
       )}
-      
-      {story && (
-        <motion.div className="z-10 bg-white/10 border border-cyan-400/20 rounded-3xl p-4 sm:p-6 md:p-8 text-center max-w-full md:max-w-3xl mx-auto mb-8 backdrop-blur-md shadow-2xl w-full">
-          <h2
-            className="text-cyan-300 font-bold mb-3"
-            style={{ fontSize: "clamp(1.2rem, 5vw, 2rem)" }}
-          >
-            {title}
+
+      {/* DIFFICULTY SELECTION */}
+      {step === "difficulty" && (
+
+        <div className="flex flex-col items-center">
+
+          <h2 className="text-xl font-bold text-cyan-300 mb-4">
+            Choose Difficulty
           </h2>
 
-          {difficulty === "easy" && (
-            <p
-              className="text-gray-100 leading-relaxed"
-              style={{ fontSize: "clamp(0.9rem, 3.5vw, 1.25rem)" }}
-            >
-              {story}
-            </p>
-          )}
+          <div className="flex gap-3 flex-wrap justify-center">
 
-          {(difficulty === "average" || difficulty === "hard") && (
-            <>
-              {difficulty === "average" && (
-                <p
-                  className="text-gray-100 leading-relaxed mb-3"
-                  style={{ fontSize: "clamp(0.9rem, 3.5vw, 1.25rem)" }}
-                >
-                  {story}
-                </p>
-              )}
-
-              <div className="flex justify-center gap-3 mt-3 flex-wrap">
-                <motion.button
-                whileHover={{ scale: 1.05 }}
-                onClick={playAudio}
-                className="px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
-                >
-                ▶ Play
-                </motion.button>
-
-                <motion.button
-                whileHover={{ scale: 1.05 }}
-                onClick={pauseAudio}
-                className="px-4 py-2 rounded-full bg-yellow-500"
-                >
-                ⏸ Pause
-                </motion.button>
-
-                <motion.button
-                whileHover={{ scale: 1.05 }}
-                onClick={resumeAudio}
-                className="px-4 py-2 rounded-full bg-blue-500"
-                >
-                ▶ Resume
-                </motion.button>
-
-                <motion.button
-                whileHover={{ scale: 1.05 }}
-                onClick={replayAudio}
-                className="px-4 py-2 rounded-full bg-purple-500"
-                >
-                ↺ Replay
-                </motion.button>
-              </div>
-            </>
-          )}
-        </motion.div>
-      )}
-
-      {questions.length > 0 && !showResult && (
-        <div className="z-10 w-full max-w-full md:max-w-4xl space-y-4 md:space-y-6 px-2">
-          <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2 text-transparent bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-purple-500 bg-clip-text">
-            <Brain className="text-cyan-300" /> Comprehension Questions
-          </h2>
-
-          {questions.map((q, i) => (
-            <motion.div
-              key={i}
-              className="p-3 md:p-5 rounded-2xl bg-white/10 border border-cyan-400/20 shadow-lg backdrop-blur-md"
-            >
-              <p
-                className="font-semibold text-cyan-100 mb-2 md:mb-3"
-                style={{ fontSize: "clamp(0.9rem, 3vw, 1.15rem)" }}
-              >
-                {i + 1}. {q.q}
-              </p>
-
-              {q.type === "mcq" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
-                {q.a.map((opt) => (
-                  <motion.button
-                    key={opt}
-                    whileHover={{ scale: 1.03 }}
-                    onClick={() =>
-                      setUserAnswers({ ...userAnswers, [i]: opt })
-                    }
-                    className={`px-2 md:px-4 py-2 rounded-xl text-sm md:text-base font-medium transition-all ${
-                      userAnswers[i] === opt
-                        ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white shadow-md"
-                        : "bg-white/10 hover:bg-white/20 text-gray-200"
-                    }`}
-                  >
-                    {opt}
-                  </motion.button>
-                ))}
-              </div>
-            )}
-
-            {q.type === "short_answer" && (
-              <input
-                type="text"
-                placeholder="Type your answer..."
-                value={userAnswers[i] || ""}
-                onChange={(e) =>
-                  setUserAnswers({ ...userAnswers, [i]: e.target.value })
-                }
-                className="w-full px-4 py-2 rounded-xl bg-white/10 border border-cyan-400/20 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
-              />
-            )}
-            </motion.div>
-          ))}
-
-          <motion.button
-            whileHover={{ scale: 1.08 }}
-            onClick={checkAnswers}
-            className="bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white px-6 md:px-8 py-2 md:py-3 rounded-full font-semibold shadow-lg hover:opacity-90 transition-all mx-auto block"
-          >
-            Check Answers
-          </motion.button>
-        </div>
-      )}
-        <AnimatePresence>
-        {showResult && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 flex items-center justify-center z-[999]"
-          >
-            <motion.div
-              initial={{ scale: 0.7 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.7 }}
-              className="bg-white text-black rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
-            >
-              <h2 className="text-2xl font-bold mb-4">
-                🎉 Your Score
-              </h2>
-
-              <p className="text-lg mb-4">
-                {score} / {questions.length}
-              </p>
-
-              <p className="mb-6 font-semibold">
-                {Math.round((score / questions.length) * 100)}%
-              </p>
-
-              {difficulty !== "hard" && (
-                <button
-                  onClick={() => {
-                    setShowResult(false);
-                    moveToNextDifficulty();
-                  }}
-                  className="bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white px-6 py-2 rounded-full font-semibold w-full mb-3"
-                >
-                  Next Difficulty
-                </button>
-              )}
-
-              {difficulty === "hard" && (
-                <button
-                  onClick={() => {
-                    stopSpeaking();
-                    setDifficulty("easy");
-                    setCompletedDifficulties([]);
-                    setSelectedStoryId(null);
-                    setStory("");
-                    setQuestions([]);
-                    setUserAnswers({});
-                    setShowResult(false);
-                  }}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-full font-semibold w-full mb-3"
-                >
-                  Back to Story Selection
-                </button>
-              )}
+            {(["easy", "average", "hard"] as Difficulty[]).map((level) => (
 
               <button
+                key={level}
                 onClick={() => {
-                  setShowResult(false);
-                  generateStory();
+                  if (isDifficultyUnlocked(level)) {
+                    setDifficulty(level);
+                    setStep("activity");
+                  }
                 }}
-                className="border border-gray-400 px-6 py-2 rounded-full w-full"
+                className={`px-5 py-2 rounded-full font-semibold uppercase
+                ${
+                  isDifficultyUnlocked(level)
+                    ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500"
+                    : "bg-gray-700/20 text-gray-500"
+                }`}
               >
-                Try Again
+                {level}
               </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <footer className="mt-auto pb-[env(safe-area-inset-bottom)] text-xs md:text-sm text-cyan-300/80 font-mono tracking-wide pt-10">
+
+            ))}
+
+          </div>
+
+          <button
+            onClick={() => setStep("stories")}
+            className="mt-6 text-sm text-cyan-300 underline"
+          >
+            ← Back to Stories
+          </button>
+
+        </div>
+
+      )}
+
+      {/* ACTIVITY */}
+      {step === "activity" && story && (
+
+        <div className="w-full max-w-3xl">
+
+          <div className="bg-white/10 border border-cyan-400/20 rounded-3xl p-6 text-center mb-8">
+
+            <h2 className="text-2xl font-bold text-cyan-300 mb-3">
+              {title}
+            </h2>
+
+            {difficulty === "easy" && (
+              <p className="text-gray-100 leading-relaxed">{story}</p>
+            )}
+
+            {(difficulty === "average" || difficulty === "hard") && (
+              <>
+                {difficulty === "average" && (
+                  <p className="text-gray-100 mb-3">{story}</p>
+                )}
+
+                <button
+                  onClick={playAudio}
+                  className="px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+                >
+                  ▶ Play Audio
+                </button>
+              </>
+            )}
+
+          </div>
+
+          <div className="space-y-5">
+
+            <h2 className="text-xl font-bold flex items-center gap-2 text-cyan-300">
+              <Brain /> Comprehension Questions
+            </h2>
+
+            {questions.map((q, i) => (
+
+              <div
+                key={i}
+                className="p-5 rounded-2xl bg-white/10 border border-cyan-400/20"
+              >
+
+                <p className="font-semibold mb-3">
+                  {i + 1}. {q.q}
+                </p>
+
+                {q.type === "mcq" && (
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                    {q.a.map((opt) => (
+
+                      <button
+                        key={opt}
+                        onClick={() =>
+                          setUserAnswers({ ...userAnswers, [i]: opt })
+                        }
+                        className={`px-4 py-2 rounded-xl ${
+                          userAnswers[i] === opt
+                            ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500"
+                            : "bg-white/10"
+                        }`}
+                      >
+                        {opt}
+                      </button>
+
+                    ))}
+
+                  </div>
+
+                )}
+
+                {q.type === "short_answer" && (
+
+                  <input
+                    type="text"
+                    placeholder="Type your answer..."
+                    value={userAnswers[i] || ""}
+                    onChange={(e) =>
+                      setUserAnswers({
+                        ...userAnswers,
+                        [i]: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 rounded-xl bg-white/10"
+                  />
+
+                )}
+
+              </div>
+
+            ))}
+
+            <button
+              onClick={checkAnswers}
+              className="bg-gradient-to-r from-cyan-500 to-fuchsia-500 px-8 py-3 rounded-full font-semibold mx-auto block"
+            >
+              Check Answers
+            </button>
+
+          </div>
+
+        </div>
+
+      )}
+
+      <footer className="mt-auto pt-10 text-xs text-cyan-300/80">
         CompreHub — Read, Listen, Understand ⚡
       </footer>
+
     </motion.div>
   );
 }
