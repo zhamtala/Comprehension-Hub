@@ -136,19 +136,15 @@ export default function ComprehensionPage() {
     setScore(correctCount);
     setShowResult(true);
 
-    if (correctCount > 0) {
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 2000);
-    }
-
     if (!completedDifficulties.includes(difficulty)) {
       setCompletedDifficulties([...completedDifficulties, difficulty]);
     }
-  };
 
-  const moveToNextDifficulty = () => {
-    if (difficulty === "easy") setDifficulty("average");
-    else if (difficulty === "average") setDifficulty("hard");
+    if (correctCount > 0) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 2500);
+    }
+
   };
 
   const isDifficultyUnlocked = (level: Difficulty) => {
@@ -391,6 +387,76 @@ export default function ComprehensionPage() {
             >
               Check Answers
             </button>
+            
+            {showResult && (
+              <div className="mt-8 text-center bg-white/10 p-6 rounded-2xl border border-cyan-400/20">
+
+                <h3 className="text-xl font-bold text-cyan-300 mb-2">
+                  Your Score
+                </h3>
+
+                <p className="text-lg mb-4">
+                  {score} / {questions.length} correct
+                </p>
+
+                {/* EASY → AVERAGE */}
+                {difficulty === "easy" && (
+                  <button
+                    onClick={() => {
+                      setDifficulty("average");
+                      setShowResult(false);
+                    }}
+                    className="px-6 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+                  >
+                    Next Difficulty →
+                  </button>
+                )}
+
+                {/* AVERAGE → HARD */}
+                {difficulty === "average" && (
+                  <button
+                    onClick={() => {
+                      setDifficulty("hard");
+                      setShowResult(false);
+                    }}
+                    className="px-6 py-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500"
+                  >
+                    Final Challenge →
+                  </button>
+                )}
+
+                {/* HARD FINISHED */}
+                {difficulty === "hard" && (
+
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center mt-4">
+
+                    <button
+                      onClick={() => {
+                        setShowResult(false);
+                        generateStory();
+                      }}
+                      className="px-6 py-2 rounded-full bg-gradient-to-r from-cyan-500 to-fuchsia-500"
+                    >
+                      Try Again
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setStep("stories");
+                        setShowResult(false);
+                        stopSpeaking();
+                      }}
+                      className="px-6 py-2 rounded-full bg-gray-700"
+                    >
+                      Back to Stories
+                    </button>
+
+                  </div>
+
+                )}
+
+              </div>
+              )}
 
           </div>
 
