@@ -95,6 +95,24 @@ export default function ComprehensionPage() {
     }
   }, [difficulty, step]);
 
+  useEffect(() => {
+    stopSpeaking();
+  }, [difficulty]);
+
+  useEffect(() => {
+
+    const handleUnload = () => {
+      stopSpeaking();
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      stopSpeaking();
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+
+  }, []);
   /* Voice Controls */
 
   const playAudio = () => {
@@ -439,6 +457,7 @@ export default function ComprehensionPage() {
 
                   <button
                     onClick={() => {
+                      stopSpeaking();
                       setStep("stories");
                       setShowResult(false);
                     }}
