@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Brain } from "lucide-react";
@@ -11,6 +12,7 @@ type Step = "stories" | "difficulty" | "activity";
 
 export default function ComprehensionPage() {
 
+  const router = useRouter();
   const [step, setStep] = useState<Step>("stories");
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [completedDifficulties, setCompletedDifficulties] = useState<Difficulty[]>([]);
@@ -196,6 +198,29 @@ export default function ComprehensionPage() {
         <Confetti width={screenSize.width} height={screenSize.height} />
       )}
 
+      {/* Back Button */}
+      {step === "stories" && (
+
+        <button
+          onClick={() => {
+            stopSpeaking();
+            router.push("/dashboards/StudentDashboard");
+          }}
+          className="fixed top-4 left-4 z-50 
+          flex items-center gap-2
+          bg-white/10 backdrop-blur-md
+          border border-cyan-400/30
+          text-cyan-200
+          px-4 py-2 rounded-full
+          text-sm font-semibold
+          shadow-md
+          hover:bg-white/20 transition"
+        >
+          ← Back
+        </button>
+
+      )}
+      
       {/* HERO */}
       <div className="text-center mt-10 mb-10">
 
@@ -471,7 +496,7 @@ export default function ComprehensionPage() {
               )}
 
             </div>
-
+              
           </motion.div>
 
         )}
@@ -483,5 +508,7 @@ export default function ComprehensionPage() {
       	</footer>
 
     </motion.div>
+
+    
   );
 }
