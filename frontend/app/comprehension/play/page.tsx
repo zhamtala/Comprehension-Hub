@@ -204,7 +204,7 @@ export default function ComprehensionPage() {
         <button
           onClick={() => {
             stopSpeaking();
-            router.push("/dashboards/StudentDashboard");
+            router.push("/select");
           }}
           className="fixed top-4 left-4 z-50 
           flex items-center gap-2
@@ -220,7 +220,7 @@ export default function ComprehensionPage() {
         </button>
 
       )}
-      
+
       {/* HERO */}
       <div className="text-center mt-10 mb-10">
 
