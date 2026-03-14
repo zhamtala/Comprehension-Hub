@@ -20,6 +20,8 @@ export default function ComprehensionPage() {
   const [story, setStory] = useState("");
   const [title, setTitle] = useState("");
 
+  const QUESTIONS_PER_PAGE = 5;
+  const [currentPage, setCurrentPage] = useState(1);
   const [questions, setQuestions] = useState<
     { q: string; a: string[]; correct: string; type: string }[]
   >([]);
@@ -85,6 +87,7 @@ export default function ComprehensionPage() {
       setQuestions(data.questions);
       setUserAnswers({});
       setShowResult(false);
+      setCurrentPage(1);
 
     } catch (error) {
       console.error("Failed to fetch comprehension content", error);
@@ -190,6 +193,16 @@ export default function ComprehensionPage() {
     if (level === "hard") return completedDifficulties.includes("average");
     return false;
   };
+
+  const indexOfLastQuestion = currentPage * QUESTIONS_PER_PAGE;
+  const indexOfFirstQuestion = indexOfLastQuestion - QUESTIONS_PER_PAGE;
+
+  const currentQuestions = questions.slice(
+    indexOfFirstQuestion,
+    indexOfLastQuestion
+  );
+
+  const totalPages = Math.ceil(questions.length / QUESTIONS_PER_PAGE);
 
   return (
     <motion.div className="min-h-screen flex flex-col items-center bg-gradient-to-b from-black via-slate-900 to-black text-white px-4 pb-20">
@@ -355,67 +368,100 @@ export default function ComprehensionPage() {
 
           {/* QUESTIONS */}
 
-          {questions.map((q, i) => (
+          {currentQuestions.map((q, i) => {
 
-            <div key={i} className="mb-6 bg-white/10 p-5 rounded-2xl">
+            const questionIndex = indexOfFirstQuestion + i;
 
-              <p className="mb-3 font-semibold">
-                {i + 1}. {q.q}
-              </p>
+            return (
 
-              {q.type === "mcq" && (
+              <div key={questionIndex} className="mb-6 bg-white/10 p-5 rounded-2xl">
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <p className="mb-3 font-semibold">
+                  {questionIndex + 1}. {q.q}
+                </p>
 
-                  {q.a.map((opt) => (
+                {q.type === "mcq" && (
 
-                    <button
-                      key={opt}
-                      onClick={() =>
-                        setUserAnswers({ ...userAnswers, [i]: opt })
-                      }
-                      className={`px-4 py-2 rounded-xl ${
-                        userAnswers[i] === opt
-                          ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500"
-                          : "bg-white/10"
-                      }`}
-                    >
-                      {opt}
-                    </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
-                  ))}
+                    {q.a.map((opt) => (
 
-                </div>
+                      <button
+                        key={opt}
+                        onClick={() =>
+                          setUserAnswers({ ...userAnswers, [questionIndex]: opt })
+                        }
+                        className={`px-4 py-2 rounded-xl ${
+                          userAnswers[questionIndex] === opt
+                            ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500"
+                            : "bg-white/10"
+                        }`}
+                      >
+                        {opt}
+                      </button>
 
-              )}
+                    ))}
 
-              {q.type === "short_answer" && (
+                  </div>
 
-                <input
-                  type="text"
-                  value={userAnswers[i] || ""}
-                  onChange={(e) =>
-                    setUserAnswers({
-                      ...userAnswers,
-                      [i]: e.target.value,
-                    })
-                  }
-                  className="w-full px-4 py-2 rounded-xl bg-white/10"
-                />
+                )}
 
-              )}
+                {q.type === "short_answer" && (
 
-            </div>
+                  <input
+                    type="text"
+                    value={userAnswers[questionIndex] || ""}
+                    onChange={(e) =>
+                      setUserAnswers({
+                        ...userAnswers,
+                        [questionIndex]: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-2 rounded-xl bg-white/10"
+                  />
 
-          ))}
+                )}
 
+              </div>
+
+            );
+
+          })}
+
+          <div className="flex justify-center items-center gap-4 mt-6">
+
+            {currentPage > 1 && (
+              <button
+                onClick={() => setCurrentPage(currentPage - 1)}
+                className="px-4 py-2 rounded-full bg-white/10 border border-cyan-400/30"
+              >
+                ← Previous
+              </button>
+            )}
+
+            <span className="text-cyan-300 text-sm">
+              Page {currentPage} / {totalPages}
+            </span>
+
+            {currentPage < totalPages && (
+              <button
+                onClick={() => setCurrentPage(currentPage + 1)}
+                className="px-4 py-2 rounded-full bg-white/10 border border-cyan-400/30"
+              >
+                Next →
+              </button>
+            )}
+
+          </div>
+
+          {currentPage === totalPages && ( 
           <button
             onClick={checkAnswers}
             className="bg-gradient-to-r from-cyan-500 to-fuchsia-500 px-8 py-3 rounded-full block mx-auto"
           >
             Check Answers
           </button>
-
+          )}
         </div>
 
       )}
