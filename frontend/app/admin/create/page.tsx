@@ -200,6 +200,7 @@ export default function CreateQuestionPage() {
                 <option value="mcq">Multiple Choice</option>
                 <option value="highlight">Highlight the Incorrect Word</option>
                 <option value="short_answer">Short Answer</option>
+                <option value="long_answer">Long Answer</option>
               </select>
             </div>
 
@@ -347,6 +348,16 @@ export default function CreateQuestionPage() {
                   importance of nature
                 </p>
               </div>
+            )}
+
+            {form.question_type === "long_answer" && (
+              <textarea
+                placeholder="Enter guide answer or keywords (optional)..."
+                value={form.correct_answer}
+                onChange={handleChange}
+                className="w-full p-3 border rounded"
+                rows={5}
+              />
             )}
 
             {/* Explanation */}

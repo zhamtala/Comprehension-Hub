@@ -33,89 +33,89 @@ export default function EditQuestionPage() {
   // =========================
   // FETCH QUESTION
   // =========================
-
   useEffect(() => {
     if (!id) return;
 
     const fetchQuestion = async () => {
-        try {
+      try {
         const token = localStorage.getItem("token");
 
         const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/admin/questions/${id}`,
-            {
+          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/questions/${id}`,
+          {
             headers: {
-                Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
-            }
+          }
         );
-
-        if (!res.ok) {
-            const text = await res.text(); // safer debugging
-            console.error("Raw backend response:", text);
-            throw new Error("Failed to fetch question");
-        }
 
         const data = await res.json();
 
         setForm({
-            activity: data.activity || "grammar",
-            difficulty: data.difficulty || "easy",
-            question_type: data.question_type || "mcq",
-            question_text: data.question_text || "",
-            correct_answer: data.correct_answer || "",
-            explanation: data.explanation || "",
-            options:
-            Array.isArray(data.options) && data.options.length === 4
-                ? data.options.map((opt: string) => opt || "")
-                : ["", "", "", ""],
+          activity: data.activity || "grammar",
+          difficulty: data.difficulty || "easy",
+          question_type: data.question_type || "mcq",
+          question_text: data.question_text || "",
+          correct_answer: data.correct_answer || "",
+          explanation: data.explanation || "",
+          options:
+            Array.isArray(data.options) && data.options.length
+              ? data.options
+              : ["", "", "", ""],
         });
 
         setLoading(false);
-        } catch (err: any) {
+      } catch (err: any) {
         setError(err.message);
         setLoading(false);
-        }
+      }
     };
 
     fetchQuestion();
-    }, [id]);
-    
+  }, [id]);
+
   // =========================
-  // HANDLE INPUT CHANGE
+  // HANDLE CHANGE
   // =========================
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: any) => {
     const { name, value } = e.target;
 
+    // 🔥 AUTO SET ESSAY FOR HARD
+    if (name === "difficulty" && value === "hard") {
+      setForm((prev) => ({
+        ...prev,
+        difficulty: value,
+        question_type: "essay",
+      }));
+      return;
+    }
+
     setForm((prev) => ({
       ...prev,
-      [name]: value ?? "",
+      [name]: value,
     }));
   };
 
   // =========================
-  // HANDLE OPTION CHANGE
+  // OPTION CHANGE
   // =========================
   const handleOptionChange = (index: number, value: string) => {
-    const updatedOptions = [...form.options];
-    updatedOptions[index] = value ?? "";
+    const updated = [...form.options];
+    updated[index] = value;
 
     setForm((prev) => ({
       ...prev,
-      options: updatedOptions,
+      options: updated,
     }));
   };
 
   // =========================
-  // HANDLE SUBMIT
+  // SUBMIT
   // =========================
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
 
     try {
-        
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/admin/questions/${id}`,
         {
@@ -127,192 +127,146 @@ export default function EditQuestionPage() {
         }
       );
 
-      if (!res.ok) {
-        throw new Error("Failed to update question");
-      }
+      if (!res.ok) throw new Error("Update failed");
 
-      alert("Question updated successfully!");
+      alert("✅ Question updated!");
       router.push("/admin/questions");
     } catch (err: any) {
       alert(err.message);
     }
   };
 
-  // =========================
-  // UI STATES
-  // =========================
   if (loading) return <p className="p-6">Loading...</p>;
   if (error) return <p className="p-6 text-red-500">{error}</p>;
 
-  // =========================
-  // UI
-  // =========================
-    return (
+  return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex">
 
-        {/* SIDEBAR */}
-        <aside className="w-64 bg-black/60 border-r border-white/10 p-6 hidden md:flex flex-col">
+      {/* SIDEBAR */}
+      <aside className="w-64 bg-black/60 border-r border-white/10 p-6 hidden md:flex flex-col">
         <h2 className="text-xl font-bold text-cyan-400 mb-8">
-            Admin Panel
+          Admin Panel
         </h2>
 
         <nav className="flex flex-col gap-4 text-sm">
-            <button
-            onClick={() => router.push("/admin/upload")}
-            className="text-left hover:text-cyan-400 transition"
-            >
+          <button onClick={() => router.push("/admin/upload")} className="hover:text-cyan-400">
             Upload Questions
-            </button>
-
-            <button
-            onClick={() => router.push("/admin/questions")}
-            className="text-left text-cyan-400"
-            >
+          </button>
+          <button onClick={() => router.push("/admin/questions")} className="text-cyan-400">
             Manage Questions
-            </button>
-
-            <button
-            onClick={() => router.push("/admin")}
-            className="text-left hover:text-cyan-400 transition mt-8 text-gray-400"
-            >
-            Back to Dashboard
-            </button>
+          </button>
+          <button onClick={() => router.push("/admin")} className="mt-8 text-gray-400">
+            Back
+          </button>
         </nav>
-        </aside>
+      </aside>
 
-        {/* MAIN */}
-        <main className="flex-1 p-8">
+      {/* MAIN */}
+      <main className="flex-1 p-8">
+        <h1 className="text-3xl font-bold text-cyan-400 mb-6">
+          Edit Question
+        </h1>
 
-        {/* HEADER */}
-        <div className="mb-8">
-            <h1 className="text-3xl font-bold text-cyan-400">
-            Edit Question
-            </h1>
-            <p className="text-gray-400 text-sm mt-2">
-            Modify and update question details below.
-            </p>
-        </div>
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 space-y-8">
 
-        {/* FORM CARD */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl shadow-2xl space-y-8">
+          {/* SETTINGS */}
+          <div className="grid md:grid-cols-3 gap-4">
 
-            {/* BASIC SETTINGS */}
-            <div className="grid md:grid-cols-3 gap-4">
-            <select
-                name="activity"
-                value={form.activity}
-                onChange={handleChange}
-                className="bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            >
-                <option value="grammar">Grammar</option>
-                <option value="reading">Reading</option>
-                <option value="listening">Listening</option>
-                <option value="comprehension">Comprehension</option>
+            <select name="activity" value={form.activity} onChange={handleChange} className="input">
+              <option value="grammar">Grammar</option>
+              <option value="reading">Reading</option>
+              <option value="listening">Listening</option>
+              <option value="comprehension">Comprehension</option>
+            </select>
+
+            <select name="difficulty" value={form.difficulty} onChange={handleChange} className="input">
+              <option value="easy">Easy</option>
+              <option value="average">Average</option>
+              <option value="hard">Hard (Essay)</option>
             </select>
 
             <select
-                name="difficulty"
-                value={form.difficulty}
-                onChange={handleChange}
-                className="bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              name="question_type"
+              value={form.question_type}
+              onChange={handleChange}
+              disabled={form.difficulty === "hard"} // 🔥 lock for hard
+              className="input"
             >
-                <option value="easy">Easy</option>
-                <option value="average">Average</option>
-                <option value="hard">Hard</option>
-                <option value="standard">Standard</option>
+              <option value="mcq">MCQ</option>
+              <option value="short_answer">Short Answer</option>
+              <option value="essay">Essay</option>
             </select>
+          </div>
 
-            <select
-                name="question_type"
-                value={form.question_type}
-                onChange={handleChange}
-                className="bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            >
-                <option value="mcq">Multiple Choice</option>
-                <option value="short_answer">Short Answer</option>
-            </select>
-            </div>
+          {/* QUESTION */}
+          <textarea
+            name="question_text"
+            value={form.question_text}
+            onChange={handleChange}
+            rows={4}
+            placeholder="Enter question..."
+            className="input w-full"
+          />
 
-            {/* QUESTION TEXT */}
-            <div>
-            <h2 className="text-lg font-semibold text-cyan-400 mb-3">
-                Question
-            </h2>
-            <textarea
-                name="question_text"
-                value={form.question_text}
-                onChange={handleChange}
-                rows={4}
-                className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            />
-            </div>
-
-            {/* ANSWER SECTION */}
-            <div>
-            <h2 className="text-lg font-semibold text-cyan-400 mb-3">
-                Answer Section
-            </h2>
-
-            {form.question_type === "mcq" ? (
-                <div className="grid gap-3">
-                {form.options.map((option, index) => (
-                    <input
-                    key={index}
-                    type="text"
-                    value={option}
-                    onChange={(e) =>
-                        handleOptionChange(index, e.target.value)
-                    }
-                    placeholder={`Option ${index + 1}`}
-                    className="bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
-                    />
-                ))}
-                </div>
-            ) : (
-                <textarea
-                name="correct_answer"
-                value={form.correct_answer || ""}
-                onChange={handleChange}
-                rows={5}
-                placeholder="Enter acceptable answers or phrases..."
-                className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+          {/* ANSWER UI */}
+          {form.question_type === "mcq" && (
+            <div className="grid gap-3">
+              {form.options.map((opt, i) => (
+                <input
+                  key={i}
+                  value={opt}
+                  onChange={(e) => handleOptionChange(i, e.target.value)}
+                  placeholder={`Option ${i + 1}`}
+                  className="input"
                 />
-            )}
+              ))}
             </div>
+          )}
 
-            {/* EXPLANATION */}
-            <div>
-            <h2 className="text-lg font-semibold text-cyan-400 mb-3">
-                Explanation (Optional)
-            </h2>
+          {form.question_type === "short_answer" && (
             <textarea
-                name="explanation"
-                value={form.explanation}
-                onChange={handleChange}
-                rows={4}
-                className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              name="correct_answer"
+              value={form.correct_answer}
+              onChange={handleChange}
+              rows={3}
+              placeholder="Correct answer..."
+              className="input w-full"
             />
-            </div>
+          )}
 
-            {/* ACTION BUTTONS */}
-            <div className="flex justify-end gap-4 pt-4 border-t border-white/10">
-            <button
-                onClick={() => router.push("/admin/questions")}
-                className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition"
-            >
-                Cancel
+          {form.question_type === "essay" && (
+            <textarea
+              name="correct_answer"
+              value={form.correct_answer}
+              onChange={handleChange}
+              rows={6}
+              placeholder="Guide answer / rubric..."
+              className="input w-full"
+            />
+          )}
+
+          {/* EXPLANATION */}
+          <textarea
+            name="explanation"
+            value={form.explanation}
+            onChange={handleChange}
+            rows={3}
+            placeholder="Explanation (optional)"
+            className="input w-full"
+          />
+
+          {/* ACTIONS */}
+          <div className="flex justify-end gap-4">
+            <button onClick={() => router.push("/admin/questions")} className="btn-secondary">
+              Cancel
             </button>
 
-            <button
-                onClick={handleSubmit}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold transition"
-            >
-                Save Changes
+            <button onClick={handleSubmit} className="btn-primary">
+              Save Changes
             </button>
-            </div>
-
+          </div>
         </div>
-        </main>
+      </main>
     </div>
-    );
+  );
 }

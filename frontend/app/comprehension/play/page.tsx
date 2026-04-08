@@ -160,19 +160,23 @@ export default function ComprehensionPage() {
         }
       }
 
-      if (q.type === "short_answer") {
+      if (q.type === "short_answer" || q.type === "long_answer") {
 
-        const acceptableAnswers = q.correct
+      const studentAnswer = (userAnswers[i] || "").toLowerCase();
+
+      const acceptableAnswers =
+        (q.correct || "")
           .toLowerCase()
           .split("\n")
-          .map((a) => a.trim());
+          .map(a => a.trim())
+          .filter(a => a.length > 0);
 
-        const matched = acceptableAnswers.some((ans) =>
-          studentAnswer.includes(ans)
-        );
+      const matched = acceptableAnswers.some(keyword =>
+        studentAnswer.includes(keyword)
+      );
 
-        if (matched) correctCount++;
-      }
+      if (matched) correctCount++;
+    }
 
     });
 
@@ -420,6 +424,18 @@ export default function ComprehensionPage() {
                     className="w-full px-4 py-2 rounded-xl bg-white/10"
                   />
 
+                )}
+
+                {q.type === "long_answer" && (
+                  <textarea
+                    placeholder="Write your answer here..."
+                    value={userAnswers[i] || ""}
+                    onChange={(e) =>
+                      setUserAnswers({ ...userAnswers, [i]: e.target.value })
+                    }
+                    className="w-full px-4 py-3 rounded-xl bg-white/10 border border-cyan-400/20 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                    rows={5}
+                  />
                 )}
 
               </div>

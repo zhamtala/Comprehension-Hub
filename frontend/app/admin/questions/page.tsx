@@ -9,6 +9,8 @@ interface Question {
   difficulty: string;
   question_type: string;
   question_text: string;
+  story_id?: number;
+  story_title?: string;
 }
 
 export default function ManageQuestionsPage() {
@@ -17,6 +19,10 @@ export default function ManageQuestionsPage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [filterStory, setFilterStory] = useState("");
+  const [filterDifficulty, setFilterDifficulty] = useState("");
+  const [filterActivity, setFilterActivity] = useState("");
+  const [filterType, setFilterType] = useState("");
 
   /* =========================
      FETCH QUESTIONS
@@ -89,6 +95,16 @@ export default function ManageQuestionsPage() {
     }
   };
 
+  const filteredQuestions = questions.filter((q) => {
+    return (
+      (!filterStory ||
+        q.story_title?.toLowerCase().includes(filterStory.toLowerCase())) &&
+      (!filterActivity || q.activity === filterActivity) &&
+      (!filterDifficulty || q.difficulty === filterDifficulty) &&
+      (!filterType || q.question_type === filterType)
+    );
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex">
 
@@ -134,16 +150,67 @@ export default function ManageQuestionsPage() {
           </p>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-2xl overflow-x-auto">
+        <div className="flex flex-wrap gap-3 mb-6">
 
+          {/* STORY */}
+          <input
+            placeholder="Filter by story..."
+            value={filterStory}
+            onChange={(e) => setFilterStory(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-black/50 border border-white/10 text-sm"
+          />
+
+          {/* ACTIVITY */}
+          <select
+            onChange={(e) => setFilterActivity(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-black/50 border border-white/10 text-sm"
+          >
+            <option value="">All Activities</option>
+            <option value="reading">Reading</option>
+            <option value="listening">Listening</option>
+            <option value="comprehension">Comprehension</option>
+          </select>
+
+          {/* DIFFICULTY */}
+          <select
+            onChange={(e) => setFilterDifficulty(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-black/50 border border-white/10 text-sm"
+          >
+            <option value="">All Difficulty</option>
+            <option value="easy">Easy</option>
+            <option value="average">Average</option>
+            <option value="hard">Hard</option>
+          </select>
+
+          {/* TYPE */}
+          <select
+            onChange={(e) => setFilterType(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-black/50 border border-white/10 text-sm"
+          >
+            <option value="">All Types</option>
+            <option value="mcq">MCQ</option>
+            <option value="short_answer">Short</option>
+            <option value="long_answer">Essay</option>
+          </select>
+
+        </div>
+
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-2xl overflow-x-auto">
+          
+          <p className="text-sm text-gray-400 mb-3">
+            Showing {filteredQuestions.length} of {questions.length} questions
+          </p>
+          
           {loading ? (
             <p className="text-gray-400">Loading questions...</p>
           ) : error ? (
             <p className="text-red-400">{error}</p>
           ) : (
+            
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10 text-left text-gray-300">
+                  <th className="py-3 px-4">Story</th>
                   <th className="py-3 px-4">ID</th>
                   <th className="py-3 px-4">Activity</th>
                   <th className="py-3 px-4">Difficulty</th>
@@ -154,11 +221,12 @@ export default function ManageQuestionsPage() {
               </thead>
 
               <tbody>
-                {questions.map((q) => (
+                {filteredQuestions.map((q) => (
                   <tr
                     key={q.id}
                     className="border-b border-white/5 hover:bg-white/5 transition"
                   >
+                    <td className="py-3 px-4">{q.story_title || "_"}</td>
                     <td className="py-3 px-4">{q.id}</td>
                     <td className="py-3 px-4 capitalize">{q.activity}</td>
                     <td className="py-3 px-4 capitalize">{q.difficulty}</td>
@@ -185,6 +253,14 @@ export default function ManageQuestionsPage() {
                   </tr>
                 ))}
               </tbody>
+
+              {filteredQuestions.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="text-center py-6 text-gray-400">
+                    No questions found.
+                  </td>
+                </tr>
+              )}
               
             </table>
           )}

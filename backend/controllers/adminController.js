@@ -165,7 +165,9 @@ export const uploadQuestions = async (req, res) => {
   export const getAllQuestions = async (req, res) => {
   try {
     const [questions] = await db.query(`
-      SELECT * FROM questions2 ORDER BY id DESC
+      SELECT q.*, s.title AS story_title
+      FROM questions2 q
+      LEFT JOIN stories s ON q.story_id = s.id
     `);
 
     const [options] = await db.query(`
