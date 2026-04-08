@@ -1,7 +1,3 @@
-const nextConfig = {
-  experimental: {
-    turbo: false, // disables Turbopack
-  },
-};
+const nextConfig = {};
 
 module.exports = nextConfig;
