@@ -30,9 +30,7 @@ export default function EditQuestionPage() {
     options: ["", "", "", ""],
   });
 
-  // =========================
-  // FETCH QUESTION
-  // =========================
+  /* ================= FETCH ================= */
   useEffect(() => {
     if (!id) return;
 
@@ -43,21 +41,19 @@ export default function EditQuestionPage() {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/admin/questions/${id}`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
 
         const data = await res.json();
 
         setForm({
-          activity: data.activity || "grammar",
-          difficulty: data.difficulty || "easy",
-          question_type: data.question_type || "mcq",
-          question_text: data.question_text || "",
-          correct_answer: data.correct_answer || "",
-          explanation: data.explanation || "",
+          activity: data.question.activity,
+          difficulty: data.question.difficulty,
+          question_type: data.question.question_type,
+          question_text: data.question.question_text,
+          correct_answer: data.question.correct_answer || "",
+          explanation: data.question.explanation || "",
           options:
             Array.isArray(data.options) && data.options.length
               ? data.options
@@ -74,44 +70,28 @@ export default function EditQuestionPage() {
     fetchQuestion();
   }, [id]);
 
-  // =========================
-  // HANDLE CHANGE
-  // =========================
+  /* ================= HANDLERS ================= */
   const handleChange = (e: any) => {
     const { name, value } = e.target;
 
-    // 🔥 AUTO SET ESSAY FOR HARD
     if (name === "difficulty" && value === "hard") {
       setForm((prev) => ({
         ...prev,
         difficulty: value,
-        question_type: "essay",
+        question_type: "long_answer",
       }));
       return;
     }
 
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // =========================
-  // OPTION CHANGE
-  // =========================
   const handleOptionChange = (index: number, value: string) => {
     const updated = [...form.options];
     updated[index] = value;
-
-    setForm((prev) => ({
-      ...prev,
-      options: updated,
-    }));
+    setForm((prev) => ({ ...prev, options: updated }));
   };
 
-  // =========================
-  // SUBMIT
-  // =========================
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
@@ -120,9 +100,7 @@ export default function EditQuestionPage() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/admin/questions/${id}`,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(form),
         }
       );
@@ -136,137 +114,182 @@ export default function EditQuestionPage() {
     }
   };
 
-  if (loading) return <p className="p-6">Loading...</p>;
+  if (loading) return <p className="p-6 text-white">Loading...</p>;
   if (error) return <p className="p-6 text-red-500">{error}</p>;
 
+  /* ================= UI ================= */
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white flex">
 
       {/* SIDEBAR */}
       <aside className="w-64 bg-black/60 border-r border-white/10 p-6 hidden md:flex flex-col">
-        <h2 className="text-xl font-bold text-cyan-400 mb-8">
-          Admin Panel
-        </h2>
+        <h2 className="text-xl font-bold text-cyan-400 mb-8">Admin Panel</h2>
 
         <nav className="flex flex-col gap-4 text-sm">
-          <button onClick={() => router.push("/admin/upload")} className="hover:text-cyan-400">
-            Upload Questions
-          </button>
           <button onClick={() => router.push("/admin/questions")} className="text-cyan-400">
             Manage Questions
           </button>
-          <button onClick={() => router.push("/admin")} className="mt-8 text-gray-400">
-            Back
+          <button onClick={() => router.push("/admin")} className="text-gray-400 mt-8">
+            Back to Dashboard
           </button>
         </nav>
       </aside>
 
       {/* MAIN */}
-      <main className="flex-1 p-8">
-        <h1 className="text-3xl font-bold text-cyan-400 mb-6">
-          Edit Question
-        </h1>
+      <main className="flex-1 p-8 max-w-4xl mx-auto">
 
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 space-y-8">
+        {/* HEADER */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-cyan-400">
+            Edit Question
+          </h1>
+          <p className="text-gray-400 text-sm mt-2">
+            Modify your question content, answers, and difficulty.
+          </p>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white/5 border border-white/10 rounded-2xl p-8 space-y-8 backdrop-blur-xl shadow-xl"
+        >
 
           {/* SETTINGS */}
-          <div className="grid md:grid-cols-3 gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-cyan-300 mb-4">
+              Settings
+            </h2>
 
-            <select name="activity" value={form.activity} onChange={handleChange} className="input">
-              <option value="grammar">Grammar</option>
-              <option value="reading">Reading</option>
-              <option value="listening">Listening</option>
-              <option value="comprehension">Comprehension</option>
-            </select>
+            <div className="grid md:grid-cols-3 gap-4">
+              <select name="activity" value={form.activity} onChange={handleChange} className="input">
+                <option value="grammar">Grammar</option>
+                <option value="reading">Reading</option>
+                <option value="listening">Listening</option>
+                <option value="comprehension">Comprehension</option>
+              </select>
 
-            <select name="difficulty" value={form.difficulty} onChange={handleChange} className="input">
-              <option value="easy">Easy</option>
-              <option value="average">Average</option>
-              <option value="hard">Hard (Essay)</option>
-            </select>
+              <select name="difficulty" value={form.difficulty} onChange={handleChange} className="input">
+                <option value="easy">Easy</option>
+                <option value="average">Average</option>
+                <option value="hard">Hard (Essay)</option>
+              </select>
 
-            <select
-              name="question_type"
-              value={form.question_type}
-              onChange={handleChange}
-              disabled={form.difficulty === "hard"} // 🔥 lock for hard
-              className="input"
-            >
-              <option value="mcq">MCQ</option>
-              <option value="short_answer">Short Answer</option>
-              <option value="essay">Essay</option>
-            </select>
+              <select
+                name="question_type"
+                value={form.question_type}
+                onChange={handleChange}
+                disabled={form.difficulty === "hard"}
+                className="input"
+              >
+                <option value="mcq">MCQ</option>
+                <option value="short_answer">Short Answer</option>
+                <option value="long_answer">Long Answer</option>
+              </select>
+            </div>
           </div>
 
           {/* QUESTION */}
-          <textarea
-            name="question_text"
-            value={form.question_text}
-            onChange={handleChange}
-            rows={4}
-            placeholder="Enter question..."
-            className="input w-full"
-          />
+          <div>
+            <h2 className="text-lg font-semibold text-cyan-300 mb-2">
+              Question
+            </h2>
 
-          {/* ANSWER UI */}
-          {form.question_type === "mcq" && (
-            <div className="grid gap-3">
-              {form.options.map((opt, i) => (
-                <input
-                  key={i}
-                  value={opt}
-                  onChange={(e) => handleOptionChange(i, e.target.value)}
-                  placeholder={`Option ${i + 1}`}
-                  className="input"
-                />
-              ))}
-            </div>
-          )}
-
-          {form.question_type === "short_answer" && (
             <textarea
-              name="correct_answer"
-              value={form.correct_answer}
+              name="question_text"
+              value={form.question_text}
               onChange={handleChange}
-              rows={3}
-              placeholder="Correct answer..."
+              rows={4}
+              placeholder="Enter your question..."
               className="input w-full"
             />
-          )}
+          </div>
 
-          {form.question_type === "essay" && (
-            <textarea
-              name="correct_answer"
-              value={form.correct_answer}
-              onChange={handleChange}
-              rows={6}
-              placeholder="Guide answer / rubric..."
-              className="input w-full"
-            />
-          )}
+          {/* ANSWERS */}
+          <div>
+            <h2 className="text-lg font-semibold text-cyan-300 mb-4">
+              Answers
+            </h2>
+
+            {form.question_type === "mcq" && (
+              <div className="grid gap-3">
+                {form.options.map((opt, i) => (
+                  <input
+                    key={i}
+                    value={opt}
+                    onChange={(e) => handleOptionChange(i, e.target.value)}
+                    placeholder={`Option ${i + 1}`}
+                    className="input"
+                  />
+                ))}
+              </div>
+            )}
+
+            {(form.question_type === "short_answer" ||
+              form.question_type === "long_answer") && (
+              <textarea
+                name="correct_answer"
+                value={form.correct_answer}
+                onChange={handleChange}
+                rows={5}
+                placeholder="Enter keywords (one per line)..."
+                className="input w-full"
+              />
+            )}
+          </div>
 
           {/* EXPLANATION */}
-          <textarea
-            name="explanation"
-            value={form.explanation}
-            onChange={handleChange}
-            rows={3}
-            placeholder="Explanation (optional)"
-            className="input w-full"
-          />
+          <div>
+            <h2 className="text-lg font-semibold text-cyan-300 mb-2">
+              Explanation (Optional)
+            </h2>
+
+            <textarea
+              name="explanation"
+              value={form.explanation}
+              onChange={handleChange}
+              rows={3}
+              className="input w-full"
+            />
+          </div>
 
           {/* ACTIONS */}
-          <div className="flex justify-end gap-4">
-            <button onClick={() => router.push("/admin/questions")} className="btn-secondary">
+          <div className="flex justify-between items-center pt-4 border-t border-white/10">
+
+            <button
+              type="button"
+              onClick={() => router.push("/admin/questions")}
+              className="px-6 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition"
+            >
               Cancel
             </button>
 
-            <button onClick={handleSubmit} className="btn-primary">
+            <button
+              type="submit"
+              className="px-8 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-fuchsia-500 font-semibold shadow-lg shadow-cyan-500/20 hover:scale-105 transition"
+            >
               Save Changes
             </button>
+
           </div>
-        </div>
+        </form>
       </main>
+
+      {/* GLOBAL INPUT STYLE */}
+      <style jsx>{`
+        .input {
+          background: rgba(0, 0, 0, 0.6);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          padding: 12px;
+          border-radius: 10px;
+          color: white;
+          width: 100%;
+        }
+
+        .input:focus {
+          outline: none;
+          border-color: #22d3ee;
+          box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.4);
+        }
+      `}</style>
     </div>
   );
 }
