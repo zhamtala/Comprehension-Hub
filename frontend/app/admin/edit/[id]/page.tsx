@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
+interface Story {
+  id: number;
+  title: string;
+}
+
 interface QuestionForm {
   activity: string;
   difficulty: string;
@@ -11,6 +16,7 @@ interface QuestionForm {
   correct_answer: string;
   explanation: string;
   options: string[];
+  story_id?: number | null;
 }
 
 export default function EditQuestionPage() {
@@ -20,6 +26,8 @@ export default function EditQuestionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [stories, setStories] = useState<Story[]>([]);
+
   const [form, setForm] = useState<QuestionForm>({
     activity: "grammar",
     difficulty: "easy",
@@ -28,9 +36,10 @@ export default function EditQuestionPage() {
     correct_answer: "",
     explanation: "",
     options: ["", "", "", ""],
+    story_id: null,
   });
 
-  /* ================= FETCH ================= */
+  /* ================= FETCH QUESTION ================= */
   useEffect(() => {
     if (!id) return;
 
@@ -58,6 +67,7 @@ export default function EditQuestionPage() {
             Array.isArray(data.options) && data.options.length
               ? data.options
               : ["", "", "", ""],
+          story_id: data.question.story_id || null,
         });
 
         setLoading(false);
@@ -69,6 +79,23 @@ export default function EditQuestionPage() {
 
     fetchQuestion();
   }, [id]);
+
+  /* ================= FETCH STORIES ================= */
+  useEffect(() => {
+    const fetchStories = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/stories`
+        );
+        const data = await res.json();
+        setStories(data);
+      } catch (err) {
+        console.error("Failed to fetch stories", err);
+      }
+    };
+
+    fetchStories();
+  }, []);
 
   /* ================= HANDLERS ================= */
   const handleChange = (e: any) => {
@@ -144,7 +171,7 @@ export default function EditQuestionPage() {
             Edit Question
           </h1>
           <p className="text-gray-400 text-sm mt-2">
-            Modify your question content, answers, and difficulty.
+            Modify your question content, answers, and story assignment.
           </p>
         </div>
 
@@ -159,7 +186,8 @@ export default function EditQuestionPage() {
               Settings
             </h2>
 
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-4 gap-4">
+
               <select name="activity" value={form.activity} onChange={handleChange} className="input">
                 <option value="grammar">Grammar</option>
                 <option value="reading">Reading</option>
@@ -170,7 +198,7 @@ export default function EditQuestionPage() {
               <select name="difficulty" value={form.difficulty} onChange={handleChange} className="input">
                 <option value="easy">Easy</option>
                 <option value="average">Average</option>
-                <option value="hard">Hard (Essay)</option>
+                <option value="hard">Hard</option>
               </select>
 
               <select
@@ -184,6 +212,22 @@ export default function EditQuestionPage() {
                 <option value="short_answer">Short Answer</option>
                 <option value="long_answer">Long Answer</option>
               </select>
+
+              {/* 🔥 STORY SELECT */}
+              <select
+                name="story_id"
+                value={form.story_id || ""}
+                onChange={handleChange}
+                className="input"
+              >
+                <option value="">No Story</option>
+                {stories.map((story) => (
+                  <option key={story.id} value={story.id}>
+                    {story.title}
+                  </option>
+                ))}
+              </select>
+
             </div>
           </div>
 
@@ -264,7 +308,7 @@ export default function EditQuestionPage() {
 
             <button
               type="submit"
-              className="px-8 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-fuchsia-500 font-semibold shadow-lg shadow-cyan-500/20 hover:scale-105 transition"
+              className="px-8 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-fuchsia-500 font-semibold shadow-lg hover:scale-105 transition"
             >
               Save Changes
             </button>
