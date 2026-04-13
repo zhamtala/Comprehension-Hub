@@ -116,6 +116,12 @@ export default function ManageQuestionsPage() {
 
         <nav className="flex flex-col gap-4 text-sm">
           <button
+            onClick={() => router.push("/admin/create")}
+            className="text-left hover:text-cyan-400 transition"
+          >
+            Create Questions
+          </button>
+          <button
             onClick={() => router.push("/admin/upload")}
             className="text-left hover:text-cyan-400 transition"
           >

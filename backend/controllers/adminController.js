@@ -92,14 +92,15 @@ export const validateQuestions = (req, res) => {
         errors.push(`${label}: short_answer requires correct_answer`);
       }
     }
-  });
 
-    // 🔹 Long Answer validation (optional but recommended)
+    // 🔹 Long Answer validation
     if (q.question_type === "long_answer") {
       if (!q.correct_answer) {
         errors.push(`${label}: long_answer requires guide keywords/answer`);
       }
     }
+
+  });
 
   if (errors.length > 0) {
     return res.status(422).json({

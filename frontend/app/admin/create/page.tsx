@@ -137,6 +137,12 @@ export default function CreateQuestionPage() {
             Manage Questions
           </button>
           <button
+            onClick={() => router.push("/admin/upload")}
+            className="text-left hover:text-cyan-400 transition"
+          >
+            Upload Questions  
+          </button>
+          <button
             onClick={() => router.push("/admin")}
             className="text-left hover:text-cyan-400 transition mt-8 text-gray-400"
           >

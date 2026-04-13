@@ -147,9 +147,9 @@ export default function ComprehensionPage() {
   const checkAnswers = () => {
     let correctCount = 0;
 
-    questions.forEach((q, i) => {
+    questions.forEach((q, index) => {
       const studentAnswer =
-        userAnswers[i]?.trim().toLowerCase() || "";
+        (userAnswers[index] || "").trim().toLowerCase();
 
       if (!q.correct) return;
 
@@ -160,32 +160,23 @@ export default function ComprehensionPage() {
         }
       }
 
-      // ✅ SHORT + LONG ANSWER (UPGRADED)
+      // ✅ SHORT + LONG ANSWER
       if (q.type === "short_answer" || q.type === "long_answer") {
-        const answer =
-          (userAnswers[i] || "").toLowerCase();
-
         const keywords = (q.correct || "")
           .toLowerCase()
           .split("\n")
-          .map((k) => k.trim())
-          .filter((k) => k.length > 0);
+          .map(k => k.trim())
+          .filter(k => k.length > 0);
 
         if (keywords.length === 0) return;
 
-        let matchCount = 0;
+        const matchedKeywords = keywords.filter(keyword =>
+          studentAnswer.includes(keyword)
+        );
 
-        keywords.forEach((keyword) => {
-          if (answer.includes(keyword)) {
-            matchCount++;
-          }
-        });
+        const scoreRatio = matchedKeywords.length / keywords.length;
 
-        const percentage =
-          (matchCount / keywords.length) * 100;
-
-        // ✅ 50% threshold
-        if (percentage >= 50) {
+        if (scoreRatio >= 0.5) {
           correctCount++;
         }
       }
@@ -195,10 +186,7 @@ export default function ComprehensionPage() {
     setShowResult(true);
 
     if (!completedDifficulties.includes(difficulty)) {
-      setCompletedDifficulties([
-        ...completedDifficulties,
-        difficulty,
-      ]);
+      setCompletedDifficulties([...completedDifficulties, difficulty]);
     }
 
     setShowConfetti(true);
