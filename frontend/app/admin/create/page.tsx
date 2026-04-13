@@ -352,6 +352,7 @@ export default function CreateQuestionPage() {
 
             {form.question_type === "long_answer" && (
               <textarea
+                name = "correct_answer"
                 placeholder="Enter guide answer or keywords (optional)..."
                 value={form.correct_answer}
                 onChange={handleChange}
