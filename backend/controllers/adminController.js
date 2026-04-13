@@ -1,6 +1,40 @@
 import db from "../db.js";
 
 /* =========================================================
+   ✅ TEXT ANSWER GRADER (SHORT + LONG)
+========================================================= */
+function gradeTextAnswer(correct_answer, student_answer) {
+  if (!correct_answer || !student_answer) return 0;
+
+  const keywords = correct_answer
+    .toLowerCase()
+    .split("\n")
+    .map(k => k.trim())
+    .filter(k => k.length > 0);
+
+  if (keywords.length === 0) return 0;
+
+  const answer = student_answer.toLowerCase();
+
+  const matched = new Set();
+
+  keywords.forEach(keyword => {
+    if (answer.includes(keyword)) {
+      matched.add(keyword);
+    }
+  });
+
+  let score = Math.round((matched.size / keywords.length) * 100);
+
+  // Prevent super short spam answers
+  if (student_answer.length < 30) {
+    score = Math.min(score, 30);
+  }
+
+  return score;
+}
+
+/* =========================================================
    ✅ VALIDATE QUESTIONS FORMAT (NO DB INSERT)
 ========================================================= */
 export const validateQuestions = (req, res) => {
@@ -28,7 +62,7 @@ export const validateQuestions = (req, res) => {
       errors.push(`${label}: missing difficulty`);
     }
 
-    if (!["mcq", "highlight", "short_answer"].includes(q.question_type)) {
+    if (!["mcq", "highlight", "short_answer", "long_answer"].includes(q.question_type)) {
       errors.push(`${label}: invalid question_type`);
     }
 
@@ -59,6 +93,13 @@ export const validateQuestions = (req, res) => {
       }
     }
   });
+
+    // 🔹 Long Answer validation (optional but recommended)
+    if (q.question_type === "long_answer") {
+      if (!q.correct_answer) {
+        errors.push(`${label}: long_answer requires guide keywords/answer`);
+      }
+    }
 
   if (errors.length > 0) {
     return res.status(422).json({
@@ -340,6 +381,11 @@ export const uploadQuestions = async (req, res) => {
       }
 
       if (question_type === "short_answer") {
+        finalCorrect = correct_answer || null;
+        finalIncorrect = null;
+      }
+
+      if (question_type === "long_answer") {
         finalCorrect = correct_answer || null;
         finalIncorrect = null;
       }

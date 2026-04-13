@@ -145,46 +145,60 @@ export default function ComprehensionPage() {
   /* Check answers */
 
   const checkAnswers = () => {
-
     let correctCount = 0;
 
     questions.forEach((q, i) => {
-
-      const studentAnswer = userAnswers[i]?.trim().toLowerCase() || "";
+      const studentAnswer =
+        userAnswers[i]?.trim().toLowerCase() || "";
 
       if (!q.correct) return;
 
+      // ✅ MCQ
       if (q.type === "mcq") {
         if (studentAnswer === q.correct.trim().toLowerCase()) {
           correctCount++;
         }
       }
 
+      // ✅ SHORT + LONG ANSWER (UPGRADED)
       if (q.type === "short_answer" || q.type === "long_answer") {
+        const answer =
+          (userAnswers[i] || "").toLowerCase();
 
-      const studentAnswer = (userAnswers[i] || "").toLowerCase();
-
-      const acceptableAnswers =
-        (q.correct || "")
+        const keywords = (q.correct || "")
           .toLowerCase()
           .split("\n")
-          .map(a => a.trim())
-          .filter(a => a.length > 0);
+          .map((k) => k.trim())
+          .filter((k) => k.length > 0);
 
-      const matched = acceptableAnswers.some(keyword =>
-        studentAnswer.includes(keyword)
-      );
+        if (keywords.length === 0) return;
 
-      if (matched) correctCount++;
-    }
+        let matchCount = 0;
 
+        keywords.forEach((keyword) => {
+          if (answer.includes(keyword)) {
+            matchCount++;
+          }
+        });
+
+        const percentage =
+          (matchCount / keywords.length) * 100;
+
+        // ✅ 50% threshold
+        if (percentage >= 50) {
+          correctCount++;
+        }
+      }
     });
 
     setScore(correctCount);
     setShowResult(true);
 
     if (!completedDifficulties.includes(difficulty)) {
-      setCompletedDifficulties([...completedDifficulties, difficulty]);
+      setCompletedDifficulties([
+        ...completedDifficulties,
+        difficulty,
+      ]);
     }
 
     setShowConfetti(true);
@@ -209,7 +223,7 @@ export default function ComprehensionPage() {
   const totalPages = Math.ceil(questions.length / QUESTIONS_PER_PAGE);
 
   return (
-    <motion.div className="min-h-screen flex flex-col items-center bg-gradient-to-b from-black via-slate-900 to-black text-white px-4 pb-20">
+    <motion.div className="min-h-screen flex flex-col items-center bg-gradient-to-b from-black via-slate-900 to-black text-white px-4 pb-32 pt-20">
 
       {showConfetti && (
         <Confetti width={screenSize.width} height={screenSize.height} />
@@ -223,7 +237,7 @@ export default function ComprehensionPage() {
             stopSpeaking();
             router.push("/select");
           }}
-          className="fixed top-4 left-4 z-50 
+          className="absolute top-4 left-4 z-10 
           flex items-center gap-2
           bg-white/10 backdrop-blur-md
           border border-cyan-400/30
@@ -429,9 +443,9 @@ export default function ComprehensionPage() {
                 {q.type === "long_answer" && (
                   <textarea
                     placeholder="Write your answer here..."
-                    value={userAnswers[i] || ""}
+                    value={userAnswers[questionIndex] || ""}
                     onChange={(e) =>
-                      setUserAnswers({ ...userAnswers, [i]: e.target.value })
+                      setUserAnswers({ ...userAnswers, [questionIndex]: e.target.value })
                     }
                     className="w-full px-4 py-3 rounded-xl bg-white/10 border border-cyan-400/20 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
                     rows={5}
@@ -470,13 +484,15 @@ export default function ComprehensionPage() {
 
           </div>
 
-          {currentPage === totalPages && ( 
-          <button
-            onClick={checkAnswers}
-            className="bg-gradient-to-r from-cyan-500 to-fuchsia-500 px-8 py-3 rounded-full block mx-auto"
-          >
-            Check Answers
-          </button>
+          {currentPage === totalPages && (
+            <div className="fixed bottom-6 left-0 w-full flex justify-center z-40 px-4">
+              <button
+                onClick={checkAnswers}
+                className="w-full max-w-md bg-gradient-to-r from-cyan-500 to-fuchsia-500 px-8 py-4 rounded-full font-semibold shadow-lg shadow-cyan-500/30"
+              >
+                Check Answers
+              </button>
+            </div>
           )}
         </div>
 
