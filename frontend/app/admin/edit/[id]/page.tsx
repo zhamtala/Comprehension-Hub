@@ -123,16 +123,24 @@ export default function EditQuestionPage() {
     e.preventDefault();
 
     try {
+      const token = localStorage.getItem("token"); 
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/admin/questions/${id}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, 
+          },
           body: JSON.stringify(form),
         }
       );
 
-      if (!res.ok) throw new Error("Update failed");
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Update failed");
+      }
 
       alert("✅ Question updated!");
       router.push("/admin/questions");
