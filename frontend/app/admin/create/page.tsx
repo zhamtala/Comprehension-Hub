@@ -74,6 +74,7 @@ export default function CreateQuestionPage() {
     const payload = {
     ...form,
     options: form.question_type === "mcq" ? form.options : [],
+    correct_answer: form.correct_answer || null,
     story_id: form.story_id || undefined,
     story:
       showPassage &&

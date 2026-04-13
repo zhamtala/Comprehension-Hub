@@ -324,8 +324,6 @@ export const uploadQuestions = async (req, res) => {
     connection.release();
     console.error("Create question error:", err);
     res.status(500).json({ error: "Create failed" });
-  } finally {
-    connection.release();
   }
 };
 
