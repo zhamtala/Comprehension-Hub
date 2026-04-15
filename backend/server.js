@@ -24,53 +24,39 @@ const allowedOrigins = [
   "https://comprehension-hub-h2lb.vercel.app",
 ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // ✅ Allow requests with no origin (Postman, server-to-server)
-      if (!origin) return callback(null, true);
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow Postman / server calls
 
-      // ✅ Allow exact matches
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      // ✅ Allow ALL Vercel deployments (important!)
-      if (origin.includes("vercel.app")) {
-        return callback(null, true);
-      }
-
-      console.log("❌ Blocked by CORS:", origin);
-
-      // 🔥 IMPORTANT: DO NOT throw error (prevents 502)
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
-    },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true,
-  })
-);
+    }
 
-// ✅ Handle preflight requests
-app.options("*", cors());
+    console.log("❌ Blocked by CORS:", origin);
+    return callback(new Error("CORS not allowed"));
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+}));
+
+/* 🔥 IMPORTANT: Handle preflight properly */
+app.options("/*", cors());
 
 /* =============================
-   Middlewares
+   Middleware
 ============================= */
-
 app.use(express.json());
 
 /* =============================
-   Health Check Route
+   Health Check (Render)
 ============================= */
-
 app.get("/", (req, res) => {
   res.json({ message: "Backend is running 🚀" });
 });
 
 /* =============================
-   API Routes
+   Routes
 ============================= */
-
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/activities", activityRoutes);
@@ -80,9 +66,8 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/stories", storyRoutes);
 
 /* =============================
-   Start Server After DB Check
+   Start Server
 ============================= */
-
 const PORT = process.env.PORT || 5000;
 
 async function startServer() {
