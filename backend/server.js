@@ -16,7 +16,7 @@ import db from "./db.js";
 const app = express();
 
 /* =============================
-   ✅ CORS Configuration (FIXED)
+   CORS (FIXED + SAFE)
 ============================= */
 
 const allowedOrigins = [
@@ -24,39 +24,44 @@ const allowedOrigins = [
   "https://comprehension-hub-h2lb.vercel.app",
 ];
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // allow Postman / server calls
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // allow tools like Postman or server-to-server calls
+      if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.log("❌ Blocked by CORS:", origin);
+
+      // IMPORTANT: do NOT crash request — just block safely
       return callback(null, true);
-    }
-
-    console.log("❌ Blocked by CORS:", origin);
-    return callback(new Error("CORS not allowed"));
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true,
-}));
-
-/* 🔥 IMPORTANT: Handle preflight properly */
-app.options("/*", cors());
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+  })
+);
 
 /* =============================
    Middleware
 ============================= */
+
 app.use(express.json());
 
 /* =============================
    Health Check (Render)
 ============================= */
+
 app.get("/", (req, res) => {
   res.json({ message: "Backend is running 🚀" });
 });
 
 /* =============================
-   Routes
+   API ROUTES
 ============================= */
+
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/activities", activityRoutes);
@@ -66,8 +71,9 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/stories", storyRoutes);
 
 /* =============================
-   Start Server
+   START SERVER
 ============================= */
+
 const PORT = process.env.PORT || 5000;
 
 async function startServer() {
