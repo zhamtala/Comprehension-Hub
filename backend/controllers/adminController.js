@@ -204,6 +204,52 @@ export const uploadQuestions = async (req, res) => {
   }
 };
 
+    /* =========================================================
+    ✅ GET ALL QUESTIONS
+  ========================================================= */
+  export const getAllQuestions = async (req, res) => {
+    try {
+      const [questions] = await db.query(`
+        SELECT q.*, s.title AS story_title
+        FROM questions2 q
+        LEFT JOIN stories s ON q.story_id = s.id
+        ORDER BY q.id DESC
+      `);
+
+      const [options] = await db.query(`
+        SELECT * FROM question_options
+      `);
+
+      const optionsMap = {};
+
+      options.forEach(opt => {
+        if (!optionsMap[opt.question_id]) {
+          optionsMap[opt.question_id] = [];
+        }
+        optionsMap[opt.question_id].push(opt.option_text);
+      });
+
+      const formatted = questions.map(q => ({
+        id: q.id,
+        activity: q.activity,
+        difficulty: q.difficulty,
+        question_type: q.question_type,
+        question_text: q.question_text,
+        correct_answer: q.correct_answer,
+        incorrect_answer: q.incorrect_answer,
+        explanation: q.explanation,
+        story_id: q.story_id,
+        options: optionsMap[q.id] || []
+      }));
+
+      res.json(formatted);
+
+    } catch (err) {
+      console.error("🔥 GET ALL QUESTIONS ERROR:", err);
+      res.status(500).json({ error: "Failed to fetch questions" });
+    }
+  };
+
   export const createSingleQuestion = async (req, res) => {
     const {
       activity,
@@ -301,7 +347,7 @@ export const uploadQuestions = async (req, res) => {
     } catch (err) {
       await connection.rollback();
       connection.release();
-      console.error("🔥 CREATE QUESTION ERROR:", err); // VERY IMPORTANT
+      console.error("🔥 CREATE QUESTION ERROR:", err);
       res.status(500).json({ error: "Create failed", details: err.message });
     }
   };
