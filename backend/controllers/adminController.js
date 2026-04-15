@@ -267,18 +267,28 @@ export const uploadQuestions = async (req, res) => {
 
     let finalStoryId = story_id || null;
 
-    /* =========================
-       1️⃣ CREATE STORY IF NEW
-    ========================== */
-    if (!story_id && story?.title && story?.passage) {
+  if (!story_id && story?.title && story?.passage) {
+
+    // 🔍 Check if story already exists
+    const [existing] = await connection.execute(
+      `SELECT id FROM stories WHERE title = ? LIMIT 1`,
+      [story.title]
+    );
+
+    if (existing.length > 0) {
+      // ✅ Reuse existing story
+      finalStoryId = existing[0].id;
+    } else {
+      // 🆕 Create new story
       const [storyResult] = await connection.execute(
         `INSERT INTO stories (title, passage, activity, difficulty)
-         VALUES (?, ?, ?, ?)`,
+        VALUES (?, ?, ?, ?)`,
         [story.title, story.passage, activity, difficulty]
       );
 
       finalStoryId = storyResult.insertId;
     }
+  }
 
     /* =========================
        2️⃣ INSERT QUESTION
