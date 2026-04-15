@@ -204,139 +204,107 @@ export const uploadQuestions = async (req, res) => {
   }
 };
 
-  export const getAllQuestions = async (req, res) => {
-  try {
-    const [questions] = await db.query(`
-      SELECT q.*, s.title AS story_title
-      FROM questions2 q
-      LEFT JOIN stories s ON q.story_id = s.id
-    `);
-
-    const [options] = await db.query(`
-      SELECT * FROM question_options
-    `);
-
-    const optionsMap = {};
-
-    options.forEach(opt => {
-      if (!optionsMap[opt.question_id]) {
-        optionsMap[opt.question_id] = [];
-      }
-      optionsMap[opt.question_id].push(opt.option_text);
-    });
-
-    const formatted = questions.map(q => ({
-    id: q.id,
-    activity: q.activity,
-    difficulty: q.difficulty,
-    question_type: q.question_type,
-    question_text: q.question_text,
-    correct_answer: q.correct_answer,
-    incorrect_answer: q.incorrect_answer,
-    explanation: q.explanation,
-    story_id: q.story_id,
-    options: optionsMap[q.id] || []
-  }));
-
-    res.json(formatted);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch questions" });
-  }
-};
-
   export const createSingleQuestion = async (req, res) => {
-  const {
-    activity,
-    difficulty,
-    question_type,
-    question_text,
-    correct_answer,
-    incorrect_answer,
-    explanation,
-    options,
-    story_id,
-    story,
-  } = req.body;
+    const {
+      activity,
+      difficulty,
+      question_type,
+      question_text,
+      correct_answer,
+      incorrect_answer,
+      explanation,
+      options,
+      story_id,
+      story,
+    } = req.body;
 
-  const connection = await db.getConnection();
+    const connection = await db.getConnection();
 
-  try {
-    await connection.beginTransaction();
+    try {
+      await connection.beginTransaction();
 
-    let finalStoryId = story_id || null;
+      let finalStoryId = story_id || null;
 
-  if (!story_id && story?.title && story?.passage) {
+      /* =========================
+        1️⃣ HANDLE STORY
+      ========================== */
+      if (!finalStoryId && story?.title && story?.passage) {
 
-    // 🔍 Check if story already exists
-    const [existing] = await connection.execute(
-      `SELECT id FROM stories WHERE title = ? LIMIT 1`,
-      [story.title]
-    );
+        // 🔍 Check if story already exists
+        const [existing] = await connection.execute(
+          `SELECT id FROM stories WHERE title = ? LIMIT 1`,
+          [story.title]
+        );
 
-    if (existing.length > 0) {
-      // ✅ Reuse existing story
-      finalStoryId = existing[0].id;
-    } else {
-      // 🆕 Create new story
-      const [storyResult] = await connection.execute(
-        `INSERT INTO stories (title, passage, activity, difficulty)
-        VALUES (?, ?, ?, ?)`,
-        [story.title, story.passage, activity, difficulty]
+        if (existing.length > 0) {
+          // ✅ Reuse existing story
+          finalStoryId = existing[0].id;
+        } else {
+          // 🆕 Create new story (FIXED QUERY)
+          const [storyResult] = await connection.execute(
+            `INSERT INTO stories (title, passage)
+            VALUES (?, ?)`,
+            [story.title, story.passage]
+          );
+
+          finalStoryId = storyResult.insertId;
+        }
+      }
+
+      /* =========================
+        ❗ SAFETY CHECK
+      ========================== */
+      if (activity === "comprehension" && !finalStoryId) {
+        throw new Error("Story is required for comprehension questions");
+      }
+
+      /* =========================
+        2️⃣ INSERT QUESTION
+      ========================== */
+      const [result] = await connection.execute(
+        `INSERT INTO questions2
+        (activity, difficulty, question_type, question_text,
+          correct_answer, incorrect_answer, explanation, story_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          activity,
+          difficulty,
+          question_type,
+          question_text,
+          correct_answer || null,
+          incorrect_answer || null,
+          explanation || null,
+          finalStoryId,
+        ]
       );
 
-      finalStoryId = storyResult.insertId;
-    }
-  }
+      const questionId = result.insertId;
 
-    /* =========================
-       2️⃣ INSERT QUESTION
-    ========================== */
-    const [result] = await connection.execute(
-      `INSERT INTO questions2
-       (activity, difficulty, question_type, question_text,
-        correct_answer, incorrect_answer, explanation, story_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        activity,
-        difficulty,
-        question_type,
-        question_text,
-        correct_answer || null,
-        incorrect_answer || null,
-        explanation || null,
-        finalStoryId,
-      ]
-    );
-
-    const questionId = result.insertId;
-
-    /* =========================
-       3️⃣ INSERT OPTIONS (MCQ ONLY)
-    ========================== */
-    if (question_type === "mcq" && options?.length) {
-      for (const opt of options) {
-        await connection.execute(
-          `INSERT INTO question_options (question_id, option_text)
-           VALUES (?, ?)`,
-          [questionId, opt]
-        );
+      /* =========================
+        3️⃣ INSERT OPTIONS (MCQ ONLY)
+      ========================== */
+      if (question_type === "mcq" && options?.length) {
+        for (const opt of options) {
+          await connection.execute(
+            `INSERT INTO question_options (question_id, option_text)
+            VALUES (?, ?)`,
+            [questionId, opt]
+          );
+        }
       }
+
+      await connection.commit();
+      connection.release();
+
+      res.json({ success: true });
+
+    } catch (err) {
+      await connection.rollback();
+      connection.release();
+      console.error("🔥 CREATE QUESTION ERROR:", err); // VERY IMPORTANT
+      res.status(500).json({ error: "Create failed", details: err.message });
     }
-
-    await connection.commit();
-    connection.release();
-
-    res.json({ success: true });
-
-  } catch (err) {
-    await connection.rollback();
-    connection.release();
-    console.error("Create question error:", err);
-    res.status(500).json({ error: "Create failed" });
-  }
-};
+  };
 
   export const deleteQuestion = async (req, res) => {
   const { id } = req.params;
