@@ -142,9 +142,23 @@ export default function ComprehensionPage() {
     speakText(story);
   };
 
+  const areAllQuestionsAnswered = () => {
+    return questions.every((_, index) => {
+      const answer = userAnswers[index];
+      return answer && answer.trim() !== "";
+    });
+  };
+
   /* Check answers */
 
   const checkAnswers = () => {
+
+    // ❗ BLOCK submission if not all answered
+    if (!areAllQuestionsAnswered()) {
+      alert("Please answer all questions before submitting.");
+      return;
+    }
+
     let correctCount = 0;
 
     questions.forEach((q, index) => {
@@ -476,7 +490,13 @@ export default function ComprehensionPage() {
             <div className="fixed bottom-6 left-0 w-full flex justify-center z-40 px-4">
               <button
                 onClick={checkAnswers}
-                className="w-full max-w-md bg-gradient-to-r from-cyan-500 to-fuchsia-500 px-8 py-4 rounded-full font-semibold shadow-lg shadow-cyan-500/30"
+                disabled={!areAllQuestionsAnswered()}
+                className={`w-full max-w-md px-8 py-4 rounded-full font-semibold shadow-lg 
+                  ${
+                    areAllQuestionsAnswered()
+                      ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500 shadow-cyan-500/30"
+                      : "bg-gray-600 cursor-not-allowed"
+                  }`}
               >
                 Check Answers
               </button>
