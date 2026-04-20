@@ -1,61 +1,76 @@
-let currentUtterance: SpeechSynthesisUtterance | null = null;
-let voicesLoaded = false;
+import { TextToSpeech } from "@capacitor-community/text-to-speech";
 
-function loadVoices() {
-  return new Promise<void>((resolve) => {
-    const voices = speechSynthesis.getVoices();
+/* =========================
+   PLATFORM DETECTION
+========================= */
 
-    if (voices.length !== 0) {
-      voicesLoaded = true;
-      resolve();
-    } else {
-      speechSynthesis.onvoiceschanged = () => {
-        voicesLoaded = true;
-        resolve();
-      };
-    }
-  });
+function isNative() {
+  return (
+    typeof window !== "undefined" &&
+    typeof (window as any).Capacitor !== "undefined" &&
+    (window as any).Capacitor.isNativePlatform?.()
+  );
 }
+
+function isWebSpeechSupported() {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.speechSynthesis !== "undefined"
+  );
+}
+
+/* =========================
+   SPEAK
+========================= */
 
 export async function speakText(text: string) {
-  if (typeof window === "undefined") return;
+  if (!text) return;
 
-  await loadVoices();
+  try {
+    // 🟢 ANDROID / IOS (Capacitor)
+    if (isNative()) {
+      await TextToSpeech.speak({
+        text,
+        lang: "en-US",
+        rate: 1.0,
+        pitch: 1.0,
+        volume: 1.0,
+      });
+      return;
+    }
 
-  stopSpeaking();
+    // 🟡 WEB fallback
+    if (isWebSpeechSupported()) {
+      window.speechSynthesis.cancel();
 
-  const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
 
-  utterance.lang = "en-US";
-  utterance.rate = 1;
-  utterance.pitch = 1;
-  utterance.volume = 1;
+      window.speechSynthesis.speak(utterance);
+      return;
+    }
 
-  const voices = speechSynthesis.getVoices();
-
-  const preferred =
-    voices.find(v => v.lang === "en-US" && v.name.includes("Google")) ||
-    voices.find(v => v.lang === "en-US");
-
-  if (preferred) utterance.voice = preferred;
-
-  currentUtterance = utterance;
-
-  speechSynthesis.speak(utterance);
+    console.warn("No TTS support available");
+  } catch (err) {
+    console.warn("TTS error:", err);
+  }
 }
 
-export function stopSpeaking() {
-  if (typeof window === "undefined") return;
-  speechSynthesis.cancel();
-  currentUtterance = null;
-}
+/* =========================
+   STOP
+========================= */
 
-export function pauseSpeaking() {
-  if (typeof window === "undefined") return;
-  speechSynthesis.pause();
-}
+export async function stopSpeaking() {
+  try {
+    if (isNative()) {
+      await TextToSpeech.stop();
+      return;
+    }
 
-export function resumeSpeaking() {
-  if (typeof window === "undefined") return;
-  speechSynthesis.resume();
+    if (isWebSpeechSupported()) {
+      window.speechSynthesis.cancel();
+    }
+  } catch (err) {
+    console.warn("Stop error:", err);
+  }
 }

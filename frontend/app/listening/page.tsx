@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Volume2 } from "lucide-react";
 import Confetti from "react-confetti";
-import { speakText, stopSpeaking, pauseSpeaking, resumeSpeaking } from "@/lib/speech";
+import { speakText, stopSpeaking } from "@/lib/speech";
 
 
 interface ListeningQuestion {
@@ -33,7 +33,6 @@ export default function ListeningPage() {
   const [questions, setQuestions] = useState<StoryGroup["questions"]>([]);
   const [userAnswers, setUserAnswers] = useState<{ [key: number]: string }>({});
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -94,36 +93,26 @@ export default function ListeningPage() {
     fetchListeningQuestions(level);
   };
 
+  /* AUDIO CONTROLS */
+
   const playAudio = async () => {
     if (!selectedStory?.story) return;
 
     setIsPlaying(true);
-    setIsPaused(false);
-
     await speakText(selectedStory.story);
-
-    const checkSpeaking = setInterval(() => {
-      if (!window.speechSynthesis.speaking) {
-        setIsPlaying(false);
-        setIsPaused(false);
-        clearInterval(checkSpeaking);
-      }
-    }, 300);
+    setIsPlaying(false);
   };
 
-  const pauseAudio = () => {
-    pauseSpeaking();
-    setIsPaused(true);
-  };
-
-  const resumeAudio = () => {
-    resumeSpeaking();
-    setIsPaused(false);
-  };
-
-  const replayAudio = () => {
+  const stopAudio = () => {
     stopSpeaking();
-    playAudio();
+    setIsPlaying(false);
+  };
+
+  const replayAudio = async () => {
+    stopSpeaking();
+    setIsPlaying(true);
+    await speakText(selectedStory?.story || "");
+    setIsPlaying(false);
   };
 
   const checkAnswers = () => {
@@ -185,15 +174,10 @@ export default function ListeningPage() {
   };
 
     useEffect(() => {
-    speechSynthesis.getVoices();
-  }, []);
-
-    useEffect(() => {
     const stopSpeech = () => {
       stopSpeaking();
     };
 
-    // Stop when leaving page
     window.addEventListener("beforeunload", stopSpeech);
     window.addEventListener("popstate", stopSpeech);
 
@@ -264,35 +248,22 @@ export default function ListeningPage() {
             onClick={playAudio}
             className="px-4 py-2 bg-green-600 rounded-lg text-white"
           >
-            ▶ Play
+            ▶
           </button>
-
-          {/* PAUSE */}
-          {isPlaying && !isPaused && (
-            <button
-              onClick={pauseAudio}
-              className="px-4 py-2 bg-yellow-500 rounded-lg text-white"
-            >
-              ⏸ Pause
-            </button>
-          )}
-
-          {/* RESUME */}
-          {isPaused && (
-            <button
-              onClick={resumeAudio}
-              className="px-4 py-2 bg-blue-500 rounded-lg text-white"
-            >
-              ▶ Resume
-            </button>
-          )}
+          {/* STOP */}
+          <button
+            onClick={stopAudio} 
+            className="px-4 py-2 bg-red-600 rounded-lg text-white"
+          >
+            ⏹
+          </button>
 
           {/* REPLAY */}
           <button
             onClick={replayAudio}
             className="px-4 py-2 bg-purple-600 rounded-lg text-white"
           >
-            🔁 Replay
+            🔁
           </button>
 
         </div>

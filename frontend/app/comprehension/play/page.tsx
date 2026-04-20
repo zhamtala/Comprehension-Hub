@@ -124,22 +124,17 @@ export default function ComprehensionPage() {
     stopSpeaking();
     speakText(story);
     setIsPlaying(true);
-    setIsPaused(false);
   };
 
-  const pauseAudio = () => {
-    window.speechSynthesis.pause();
-    setIsPaused(true);
-  };
-
-  const resumeAudio = () => {
-    window.speechSynthesis.resume();
-    setIsPaused(false);
+  const stopAudio = () => {
+    stopSpeaking();
+    setIsPlaying(false);
   };
 
   const replayAudio = () => {
     stopSpeaking();
     speakText(story);
+    setIsPlaying(true);
   };
 
   const areAllQuestionsAnswered = () => {
@@ -365,19 +360,15 @@ export default function ComprehensionPage() {
               <div className="flex flex-wrap justify-center gap-3 mt-4">
 
                 <button onClick={playAudio} className="bg-green-500 px-4 py-2 rounded-full">
-                  ▶ Play
+                  ▶
                 </button>
 
-                <button onClick={pauseAudio} className="bg-yellow-500 px-4 py-2 rounded-full">
-                  ⏸ Pause
-                </button>
-
-                <button onClick={resumeAudio} className="bg-blue-500 px-4 py-2 rounded-full">
-                  ▶ Resume
+                <button onClick={stopAudio} className="bg-red-500 px-4 py-2 rounded-full">
+                  ⏹
                 </button>
 
                 <button onClick={replayAudio} className="bg-purple-500 px-4 py-2 rounded-full">
-                  🔁 Replay
+                  🔁
                 </button>
 
               </div>
