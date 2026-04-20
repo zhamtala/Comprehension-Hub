@@ -1,22 +1,23 @@
 import { TextToSpeech } from "@capacitor-community/text-to-speech";
 
 /* =========================
-   PLATFORM DETECTION
+   SAFE PLATFORM DETECTION
 ========================= */
 
+function isClient() {
+  return typeof window !== "undefined";
+}
+
 function isNative() {
-  return (
-    typeof window !== "undefined" &&
-    typeof (window as any).Capacitor !== "undefined" &&
-    (window as any).Capacitor.isNativePlatform?.()
-  );
+  if (!isClient()) return false;
+
+  const capacitor = (window as any)?.Capacitor;
+
+  return !!capacitor?.isNativePlatform?.();
 }
 
 function isWebSpeechSupported() {
-  return (
-    typeof window !== "undefined" &&
-    typeof window.speechSynthesis !== "undefined"
-  );
+  return isClient() && "speechSynthesis" in window;
 }
 
 /* =========================
@@ -27,7 +28,7 @@ export async function speakText(text: string) {
   if (!text) return;
 
   try {
-    // 🟢 ANDROID / IOS (Capacitor)
+    // 🟢 NATIVE (Android / iOS via Capacitor)
     if (isNative()) {
       await TextToSpeech.speak({
         text,
@@ -39,7 +40,7 @@ export async function speakText(text: string) {
       return;
     }
 
-    // 🟡 WEB fallback
+    // 🟡 WEB fallback (Chrome / desktop / mobile browser)
     if (isWebSpeechSupported()) {
       window.speechSynthesis.cancel();
 
