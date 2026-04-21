@@ -122,7 +122,7 @@ export default function ComprehensionPage() {
       window.removeEventListener("beforeunload", handleUnload);
     };
   }, []);
-  
+
   /* Voice Controls */
 
   const playAudio = () => {
@@ -227,7 +227,7 @@ export default function ComprehensionPage() {
   return (
     <motion.div className="min-h-screen flex flex-col items-center bg-gradient-to-b from-black via-slate-900 to-black text-white px-4 pb-32 pt-20">
 
-      {typeof window !== "undefined" && (
+      {showResult && showConfetti && (
         <Confetti width={screenSize.width} height={screenSize.height} />
       )}
 
