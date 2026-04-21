@@ -4,7 +4,11 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Brain } from "lucide-react";
-import Confetti from "react-confetti";
+import dynamic from "next/dynamic";
+
+const Confetti = dynamic(() => import("react-confetti"), {
+  ssr: false,
+});
 import { speakText, stopSpeaking } from "@/lib/speech";
 
 type Difficulty = "easy" | "average" | "hard";
@@ -222,7 +226,7 @@ export default function ComprehensionPage() {
   return (
     <motion.div className="min-h-screen flex flex-col items-center bg-gradient-to-b from-black via-slate-900 to-black text-white px-4 pb-32 pt-20">
 
-      {showConfetti && (
+      {typeof window !== "undefined" && (
         <Confetti width={screenSize.width} height={screenSize.height} />
       )}
 
