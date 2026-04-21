@@ -109,6 +109,7 @@ export default function ComprehensionPage() {
   }, [difficulty]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
 
     const handleUnload = () => {
       stopSpeaking();
@@ -120,8 +121,8 @@ export default function ComprehensionPage() {
       stopSpeaking();
       window.removeEventListener("beforeunload", handleUnload);
     };
-
   }, []);
+  
   /* Voice Controls */
 
   const playAudio = () => {

@@ -1,23 +1,17 @@
-import { TextToSpeech } from "@capacitor-community/text-to-speech";
-
 /* =========================
    SAFE PLATFORM DETECTION
 ========================= */
 
-function isClient() {
+function isBrowser() {
   return typeof window !== "undefined";
 }
 
 function isNative() {
-  if (!isClient()) return false;
-
-  const capacitor = (window as any)?.Capacitor;
-
-  return !!capacitor?.isNativePlatform?.();
+  return isBrowser() && (window as any).Capacitor?.isNativePlatform?.();
 }
 
 function isWebSpeechSupported() {
-  return isClient() && "speechSynthesis" in window;
+  return isBrowser() && "speechSynthesis" in window;
 }
 
 /* =========================
@@ -25,11 +19,13 @@ function isWebSpeechSupported() {
 ========================= */
 
 export async function speakText(text: string) {
-  if (!text) return;
+  if (!text || !isBrowser()) return;
 
   try {
-    // 🟢 NATIVE (Android / iOS via Capacitor)
+    // 🟢 NATIVE (lazy import — prevents SSR crash)
     if (isNative()) {
+      const { TextToSpeech } = await import("@capacitor-community/text-to-speech");
+
       await TextToSpeech.speak({
         text,
         lang: "en-US",
@@ -37,10 +33,11 @@ export async function speakText(text: string) {
         pitch: 1.0,
         volume: 1.0,
       });
+
       return;
     }
 
-    // 🟡 WEB fallback (Chrome / desktop / mobile browser)
+    // 🟡 WEB fallback
     if (isWebSpeechSupported()) {
       window.speechSynthesis.cancel();
 
@@ -62,8 +59,11 @@ export async function speakText(text: string) {
 ========================= */
 
 export async function stopSpeaking() {
+  if (!isBrowser()) return;
+
   try {
     if (isNative()) {
+      const { TextToSpeech } = await import("@capacitor-community/text-to-speech");
       await TextToSpeech.stop();
       return;
     }
