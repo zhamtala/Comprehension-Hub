@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Brain } from "lucide-react";
+import { Play, Square, RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const Confetti = dynamic(() => import("react-confetti"), {
@@ -324,11 +325,20 @@ export default function ComprehensionPage() {
                 setDifficulty(level);
                 setStep("activity");
               }}
-              className={`px-6 py-2 rounded-full ${
-                isDifficultyUnlocked(level)
-                  ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500"
-                  : "bg-gray-700"
-              }`}
+              className={`
+                w-full sm:w-auto
+                px-6 py-3 sm:px-6 sm:py-2
+                text-base sm:text-sm
+                rounded-full
+                font-semibold
+                shadow-md
+                transition
+                ${
+                  isDifficultyUnlocked(level)
+                    ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500"
+                    : "bg-gray-700"
+                }
+              `}
             >
               {level}
             </button>
@@ -363,21 +373,35 @@ export default function ComprehensionPage() {
 
             {(difficulty === "average" || difficulty === "hard") && (
 
-              <div className="flex flex-wrap justify-center gap-3 mt-4">
+             <div className="flex flex-wrap justify-center gap-3 mt-4">
 
-                <button onClick={playAudio} className="bg-green-500 px-4 py-2 rounded-full">
-                  ▶
-                </button>
+            {/* PLAY */}
+            <button
+              onClick={playAudio}
+              className="flex items-center gap-2 bg-green-500 px-4 py-2 rounded-full text-white shadow-md active:scale-95 transition"
+            >
+              <Play size={18} />
+              <span className="hidden sm:inline">Play</span>
+            </button>
 
-                <button onClick={stopAudio} className="bg-red-500 px-4 py-2 rounded-full">
-                  ⏹
-                </button>
+            {/* STOP */}
+            <button
+              onClick={stopAudio}
+              className="flex items-center gap-2 bg-red-500 px-4 py-2 rounded-full text-white shadow-md active:scale-95 transition"
+            >
+              <Square size={18} />
+              <span className="hidden sm:inline">Stop</span>
+            </button>
 
-                <button onClick={replayAudio} className="bg-purple-500 px-4 py-2 rounded-full">
-                  🔁
-                </button>
-
-              </div>
+            {/* REPLAY */}
+            <button
+              onClick={replayAudio}
+              className="flex items-center gap-2 bg-purple-500 px-4 py-2 rounded-full text-white shadow-md active:scale-95 transition"
+            >
+              <RotateCcw size={18} />
+              <span className="hidden sm:inline">Replay</span>
+            </button>
+          </div>
 
             )}
 

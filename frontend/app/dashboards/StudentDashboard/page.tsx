@@ -80,8 +80,6 @@ export default function StudentDashboard() {
 
   /* ================= STATIC MODULES ================= */
   const modules = [
-    { name: "Grammar", icon: <BookOpen className="w-6 h-6" />, color: "from-cyan-400 to-blue-500", path: "/grammar" },
-     { name: "Comprehension", icon: <BookOpen className="w-6 h-6" />, color: "from-cyan-400 to-fuchsia-500", path: "/comprehension/play" },
     { name: "Reading", icon: <FileText className="w-6 h-6" />, color: "from-fuchsia-400 to-pink-500", path: "/reading" },
     { name: "Listening", icon: <Headphones className="w-6 h-6" />, color: "from-emerald-400 to-teal-500", path: "/listening" },
     { name: "Dictionary", icon: <Library className="w-6 h-6" />, color: "from-yellow-400 to-orange-500", path: "/dictionary" },
