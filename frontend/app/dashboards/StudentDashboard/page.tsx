@@ -34,7 +34,7 @@ export default function StudentDashboard() {
       return;
     }
 
-    fetch("${process.env.NEXT_PUBLIC_API_URL}/api/users", {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
