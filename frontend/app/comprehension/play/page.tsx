@@ -483,22 +483,22 @@ export default function ComprehensionPage() {
 
           </div>
 
-          {currentPage === totalPages && (
-            <div className="sticky bottom-0 left-0 w-full bg-gradient-to-t from-black via-black/80 to-transparent pt-6 pb-4 flex justify-center z-30">
-              <button
-                onClick={checkAnswers}
-                disabled={!areAllQuestionsAnswered()}
-                className={`w-full max-w-md px-8 py-4 rounded-full font-semibold shadow-lg transition
-                  ${
-                    areAllQuestionsAnswered()
-                      ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500 shadow-cyan-500/30"
-                      : "bg-gray-600 cursor-not-allowed"
-                  }`}
-              >
-                Check Answers
-              </button>
-            </div>
-          )}
+         {currentPage === totalPages && (
+          <div className="mt-10 mb-6 flex justify-center">
+            <button
+              onClick={checkAnswers}
+              disabled={!areAllQuestionsAnswered()}
+              className={`w-full max-w-md px-8 py-4 rounded-full font-semibold shadow-lg transition
+                ${
+                  areAllQuestionsAnswered()
+                    ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500 shadow-cyan-500/30"
+                    : "bg-gray-600 cursor-not-allowed"
+                }`}
+            >
+              Check Answers
+            </button>
+          </div>
+        )}
         </div>
 
       )}
