@@ -129,7 +129,7 @@ export async function requestPasswordReset(req, res) {
     await sendResetEmail(email, rawToken);
 
     return res.json({ success: true });
-    
+
   } catch (err) {
     console.error("Forgot password error:", err);
     return res.status(500).json({ error: "Server error" });
@@ -173,4 +173,9 @@ export async function resetPassword(req, res) {
     console.error("Reset password error:", err);
     return res.status(500).json({ error: "Server error" });
   }
+  
+  console.log("=== EMAIL DEBUG ===");
+  console.log("EMAIL_USER:", process.env.EMAIL_USER);
+  console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
+  console.log("===================");
 }
