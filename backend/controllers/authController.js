@@ -10,6 +10,7 @@ import {
   updatePassword,
 } from "../models/userModel.js";
 import { validatePassword } from "../utils/passwordValidator.js";
+import { sendResetEmail } from "../utils/mailer.js";
 
 dotenv.config();
 
@@ -125,10 +126,10 @@ export async function requestPasswordReset(req, res) {
 
     await saveResetToken(user.id, hashedToken, expiry);
 
-    console.log(`🔐 PASSWORD RESET LINK:
-http://localhost:3000/passwords/reset-password?token=${rawToken}`);
+    await sendResetEmail(email, rawToken);
 
     return res.json({ success: true });
+    
   } catch (err) {
     console.error("Forgot password error:", err);
     return res.status(500).json({ error: "Server error" });

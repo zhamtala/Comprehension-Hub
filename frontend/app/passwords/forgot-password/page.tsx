@@ -13,19 +13,18 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError("");
 
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
 
-      // Always success (prevents email enumeration)
-      setSent(true);
-    } catch {
-      setError("Server error. Try again later.");
+    if (!res.ok) {
+      throw new Error("Failed to send email");
     }
-  };
+
+    setSent(true);
+      };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white px-4">
