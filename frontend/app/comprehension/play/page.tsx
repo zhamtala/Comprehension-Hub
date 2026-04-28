@@ -154,8 +154,6 @@ export default function ComprehensionPage() {
   /* Check answers */
 
   const checkAnswers = () => {
-
-    // ❗ BLOCK submission if not all answered
     if (!areAllQuestionsAnswered()) {
       alert("Please answer all questions before submitting.");
       return;
@@ -164,19 +162,16 @@ export default function ComprehensionPage() {
     let correctCount = 0;
 
     questions.forEach((q, index) => {
-      const studentAnswer =
-        (userAnswers[index] || "").trim().toLowerCase();
+      const studentAnswer = (userAnswers[index] || "").trim().toLowerCase();
 
       if (!q.correct) return;
 
-      // ✅ MCQ
       if (q.type === "mcq") {
         if (studentAnswer === q.correct.trim().toLowerCase()) {
           correctCount++;
         }
       }
 
-      // ✅ SHORT + LONG ANSWER
       if (q.type === "short_answer" || q.type === "long_answer") {
         const keywords = (q.correct || "")
           .toLowerCase()
@@ -198,10 +193,13 @@ export default function ComprehensionPage() {
       }
     });
 
+    const passed = correctCount >= questions.length / 2;
+
     setScore(correctCount);
     setShowResult(true);
 
-    if (!completedDifficulties.includes(difficulty)) {
+    // ✅ ONLY unlock if PASSED
+    if (passed && !completedDifficulties.includes(difficulty)) {
       setCompletedDifficulties([...completedDifficulties, difficulty]);
     }
 
@@ -225,6 +223,7 @@ export default function ComprehensionPage() {
   );
 
   const totalPages = Math.ceil(questions.length / QUESTIONS_PER_PAGE);
+  const hasPassed = score >= questions.length / 2;
 
   return (
     <motion.div className="min-h-screen flex flex-col items-center bg-gradient-to-b from-black via-slate-900 to-black text-white px-4 pb-32 pt-20">
@@ -539,17 +538,30 @@ export default function ComprehensionPage() {
             className="fixed inset-0 flex items-center justify-center bg-black/70 z-50"
           >
 
-            <div className="bg-slate-900 p-8 rounded-3xl text-center max-w-md w-full">
+            <div className="flex flex-col items-center gap-3 mb-3">
 
-              <h2 className="text-2xl font-bold text-cyan-300 mb-3">
+              <h2 className="text-2xl font-bold text-cyan-300">
                 Your Score
               </h2>
 
-              <p className="text-lg mb-6">
-                {score} / {questions.length} correct
-              </p>
+              {/* ✅ PASS / FAIL BADGE */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.4 }}
+                className={`px-4 py-1 rounded-full text-sm font-bold tracking-wide shadow-md
+                  ${
+                    hasPassed
+                      ? "bg-green-500/20 text-green-400 border border-green-400/30"
+                      : "bg-red-500/20 text-red-400 border border-red-400/30"
+                  }
+                `}
+              >
+                {hasPassed ? "✅ PASSED" : "❌ FAILED"}
+              </motion.div>
 
-              {difficulty === "easy" && (
+              {/* EASY */}
+              {difficulty === "easy" && hasPassed && (
                 <button
                   onClick={() => {
                     setDifficulty("average");
@@ -561,7 +573,8 @@ export default function ComprehensionPage() {
                 </button>
               )}
 
-              {difficulty === "average" && (
+              {/* AVERAGE */}
+              {difficulty === "average" && hasPassed && (
                 <button
                   onClick={() => {
                     setDifficulty("hard");
@@ -573,10 +586,22 @@ export default function ComprehensionPage() {
                 </button>
               )}
 
+              {/* FAIL BUTTON */}
+              {!hasPassed && (
+                <button
+                  onClick={() => {
+                    setShowResult(false);
+                    generateStory();
+                  }}
+                  className="bg-yellow-500 px-6 py-2 rounded-full mt-3"
+                >
+                  Retry Level
+                </button>
+              )}
+
+              {/* HARD MODE (always allowed but still respects pass/fail for retry) */}
               {difficulty === "hard" && (
-
-                <div className="flex flex-col gap-4">
-
+                <div className="flex flex-col gap-4 mt-4">
                   <button
                     onClick={() => {
                       setShowResult(false);
@@ -598,9 +623,7 @@ export default function ComprehensionPage() {
                   >
                     Back to Story Selection
                   </button>
-
                 </div>
-
               )}
 
             </div>
