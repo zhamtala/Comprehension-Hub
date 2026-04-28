@@ -528,122 +528,137 @@ export default function ComprehensionPage() {
 
       {/* RESULT POPUP */}
 
-      <AnimatePresence>
+        <AnimatePresence>
+          {showResult && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center px-4"
+            >
+              {/* 🔥 BACKDROP (blur + dark glass) */}
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
-        {showResult && (
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 flex items-center justify-center bg-black/70 z-50"
-          >
-
-            <div className="flex flex-col items-center gap-4 mb-6">
-
-              {/* ✅ STATUS BADGE (clean + prominent) */}
+              {/* 🔥 MODAL CARD */}
               <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                className={`px-6 py-2 rounded-full text-sm font-semibold tracking-wide border
-                  ${
-                    hasPassed
-                      ? "bg-green-500/10 text-green-400 border-green-400/30 shadow-green-500/20 shadow-md"
-                      : "bg-red-500/10 text-red-400 border-red-400/30 shadow-red-500/20 shadow-md"
-                  }
-                `}
+                initial={{ scale: 0.85, y: 40, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="relative z-10 w-full max-w-md rounded-3xl p-8 
+                bg-gradient-to-br from-slate-900 via-black to-slate-900
+                border border-white/10
+                shadow-2xl shadow-cyan-500/10
+                flex flex-col items-center text-center"
               >
-                {hasPassed ? "PASSED ✅" : "FAILED ❌"}
-              </motion.div>
 
-              {/* ✅ SCORE (clear + readable) */}
-              <div className="text-center">
-                <p className="text-3xl font-bold text-white">
-                  {score} / {questions.length}
+                {/* 🔥 GLOW RING (top accent) */}
+                <div className={`absolute -top-10 w-24 h-24 rounded-full blur-2xl opacity-30
+                  ${hasPassed ? "bg-green-400" : "bg-red-400"}
+                `} />
+
+                {/* ✅ STATUS BADGE */}
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className={`px-6 py-2 rounded-full text-sm font-semibold tracking-wide border mb-4
+                    ${
+                      hasPassed
+                        ? "bg-green-500/10 text-green-400 border-green-400/30 shadow-green-500/20 shadow-md"
+                        : "bg-red-500/10 text-red-400 border-red-400/30 shadow-red-500/20 shadow-md"
+                    }
+                  `}
+                >
+                  {hasPassed ? "PASSED ✅" : "FAILED ❌"}
+                </motion.div>
+
+                {/* ✅ SCORE */}
+                <div className="mb-4">
+                  <p className="text-4xl font-extrabold text-white">
+                    {score} / {questions.length}
+                  </p>
+
+                  <p className="text-sm text-cyan-200/70 mt-1">
+                    {Math.round((score / questions.length) * 100)}% Score
+                  </p>
+                </div>
+
+                {/* ✅ MESSAGE */}
+                <p className="text-sm text-cyan-200/60 mb-6">
+                  {hasPassed
+                    ? "Excellent work. You're ready for the next challenge."
+                    : "You need at least 50% to pass. Try again and improve."}
                 </p>
 
-                <p className="text-sm text-cyan-200/70 mt-1">
-                  {Math.round((score / questions.length) * 100)}% Score
-                </p>
-                <p className="text-xs text-cyan-200/60 mt-1">
-                  {hasPassed ? "Great job! You're ready for the next level." : "Keep practicing and try again."}
-                </p>
-              </div>
+                {/* 🔥 ACTION BUTTONS */}
+                <div className="flex flex-col gap-3 w-full">
 
-              {/* EASY */}
-              {difficulty === "easy" && hasPassed && (
-                <button
-                  onClick={() => {
-                    setDifficulty("average");
-                    setShowResult(false);
-                  }}
-                  className="bg-green-500 px-6 py-2 rounded-full"
-                >
-                  Next Difficulty →
-                </button>
-              )}
+                  {/* NEXT (ONLY IF PASSED) */}
+                  {hasPassed && difficulty === "easy" && (
+                    <button
+                      onClick={() => {
+                        setDifficulty("average");
+                        setShowResult(false);
+                      }}
+                      className="w-full py-3 rounded-full font-semibold
+                      bg-gradient-to-r from-green-500 to-emerald-500
+                      hover:scale-105 active:scale-95 transition"
+                    >
+                      Next Difficulty →
+                    </button>
+                  )}
 
-              {/* AVERAGE */}
-              {difficulty === "average" && hasPassed && (
-                <button
-                  onClick={() => {
-                    setDifficulty("hard");
-                    setShowResult(false);
-                  }}
-                  className="bg-purple-500 px-6 py-2 rounded-full"
-                >
-                  Final Challenge →
-                </button>
-              )}
+                  {hasPassed && difficulty === "average" && (
+                    <button
+                      onClick={() => {
+                        setDifficulty("hard");
+                        setShowResult(false);
+                      }}
+                      className="w-full py-3 rounded-full font-semibold
+                      bg-gradient-to-r from-purple-500 to-fuchsia-500
+                      hover:scale-105 active:scale-95 transition"
+                    >
+                      Final Challenge →
+                    </button>
+                  )}
 
-              {/* FAIL BUTTON */}
-              {!hasPassed && (
-                <button
-                  onClick={() => {
-                    setShowResult(false);
-                    generateStory();
-                  }}
-                  className="bg-yellow-500 px-6 py-2 rounded-full mt-3"
-                >
-                  Retry Level
-                </button>
-              )}
+                  {/* RETRY */}
+                  {!hasPassed && (
+                    <button
+                      onClick={() => {
+                        setShowResult(false);
+                        generateStory();
+                      }}
+                      className="w-full py-3 rounded-full font-semibold
+                      bg-gradient-to-r from-yellow-500 to-orange-500
+                      hover:scale-105 active:scale-95 transition"
+                    >
+                      Retry Level
+                    </button>
+                  )}
 
-              {/* HARD MODE (always allowed but still respects pass/fail for retry) */}
-              {difficulty === "hard" && (
-                <div className="flex flex-col gap-4 mt-4">
-                  <button
-                    onClick={() => {
-                      setShowResult(false);
-                      generateStory();
-                    }}
-                    className="bg-cyan-500 px-6 py-2 rounded-full"
-                  >
-                    Try Again
-                  </button>
-
+                  {/* BACK */}
                   <button
                     onClick={() => {
                       stopSpeaking();
                       setStep("stories");
-                      setShowConfetti(false);
                       setShowResult(false);
+                      setShowConfetti(false);
                     }}
-                    className="bg-gray-700 px-6 py-2 rounded-full"
+                    className="w-full py-3 rounded-full font-semibold
+                    bg-white/10 border border-white/20
+                    hover:bg-white/20 transition"
                   >
-                    Back to Story Selection
+                    Back to Stories
                   </button>
+
                 </div>
-              )}
-
-            </div>
-              
-          </motion.div>
-
-        )}
-
-      </AnimatePresence>
-	
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+          
 	      <footer className="mt-auto pt-10 text-xs text-cyan-300/80">
         	CompreHub — Read, Listen, Understand ⚡
       	</footer>
