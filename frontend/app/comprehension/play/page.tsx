@@ -538,27 +538,37 @@ export default function ComprehensionPage() {
             className="fixed inset-0 flex items-center justify-center bg-black/70 z-50"
           >
 
-            <div className="flex flex-col items-center gap-3 mb-3">
+            <div className="flex flex-col items-center gap-4 mb-6">
 
-              <h2 className="text-2xl font-bold text-cyan-300">
-                Your Score
-              </h2>
-
-              {/* ✅ PASS / FAIL BADGE */}
+              {/* ✅ STATUS BADGE (clean + prominent) */}
               <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
+                initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.4 }}
-                className={`px-4 py-1 rounded-full text-sm font-bold tracking-wide shadow-md
+                transition={{ duration: 0.3 }}
+                className={`px-6 py-2 rounded-full text-sm font-semibold tracking-wide border
                   ${
                     hasPassed
-                      ? "bg-green-500/20 text-green-400 border border-green-400/30"
-                      : "bg-red-500/20 text-red-400 border border-red-400/30"
+                      ? "bg-green-500/10 text-green-400 border-green-400/30 shadow-green-500/20 shadow-md"
+                      : "bg-red-500/10 text-red-400 border-red-400/30 shadow-red-500/20 shadow-md"
                   }
                 `}
               >
-                {hasPassed ? "✅ PASSED" : "❌ FAILED"}
+                {hasPassed ? "PASSED ✅" : "FAILED ❌"}
               </motion.div>
+
+              {/* ✅ SCORE (clear + readable) */}
+              <div className="text-center">
+                <p className="text-3xl font-bold text-white">
+                  {score} / {questions.length}
+                </p>
+
+                <p className="text-sm text-cyan-200/70 mt-1">
+                  {Math.round((score / questions.length) * 100)}% Score
+                </p>
+                <p className="text-xs text-cyan-200/60 mt-1">
+                  {hasPassed ? "Great job! You're ready for the next level." : "Keep practicing and try again."}
+                </p>
+              </div>
 
               {/* EASY */}
               {difficulty === "easy" && hasPassed && (
