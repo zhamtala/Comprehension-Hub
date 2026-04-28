@@ -20,7 +20,9 @@ export default function ComprehensionPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("stories");
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
-  const [completedDifficulties, setCompletedDifficulties] = useState<Difficulty[]>([]);
+  const [completedDifficulties, setCompletedDifficulties] = useState<{
+    [storyId: number]: Difficulty[];
+  }>({});
 
   const [story, setStory] = useState("");
   const [title, setTitle] = useState("");
@@ -199,18 +201,31 @@ export default function ComprehensionPage() {
     setShowResult(true);
 
     // ✅ ONLY unlock if PASSED
-    if (passed && !completedDifficulties.includes(difficulty)) {
-      setCompletedDifficulties([...completedDifficulties, difficulty]);
-    }
+    if (passed && selectedStoryId) {
+    setCompletedDifficulties((prev) => {
+      const storyProgress = prev[selectedStoryId] || [];
 
+      if (storyProgress.includes(difficulty)) return prev;
+
+      return {
+        ...prev,
+        [selectedStoryId]: [...storyProgress, difficulty],
+      };
+    });
+  }
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 3000);
   };
 
   const isDifficultyUnlocked = (level: Difficulty) => {
+    if (!selectedStoryId) return false;
+
+    const storyProgress = completedDifficulties[selectedStoryId] || [];
+
     if (level === "easy") return true;
-    if (level === "average") return completedDifficulties.includes("easy");
-    if (level === "hard") return completedDifficulties.includes("average");
+    if (level === "average") return storyProgress.includes("easy");
+    if (level === "hard") return storyProgress.includes("average");
+
     return false;
   };
 
@@ -294,6 +309,7 @@ export default function ComprehensionPage() {
               <button
                 onClick={() => {
                   setSelectedStoryId(storyItem.id);
+                  setDifficulty("easy"); // reset to easy
                   setStep("difficulty");
                 }}
                 className="mt-4 bg-gradient-to-r from-cyan-500 to-fuchsia-500 px-4 py-2 rounded-full"
